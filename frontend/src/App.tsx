@@ -13,9 +13,9 @@ function App() {
 
     useEffect(() => {
         async function loadProblem() {
-        const problem = await fetchProblem("0_template");
-        console.log("Loaded problem:", problem);
-        setAgentCode(problem.agent_code || "");
+            const problem = await fetchProblem("0_template");
+            console.log("Loaded problem:", problem);
+            setAgentCode(problem.agent_code || "");
         }
         loadProblem();
     }, []);

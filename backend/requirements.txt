@@ -3,3 +3,5 @@ uvicorn
 markdown
 python-frontmatter
 pydantic
+openai
+python-dotenv
