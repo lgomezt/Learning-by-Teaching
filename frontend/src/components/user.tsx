@@ -4,10 +4,11 @@ import UserOutput from "./useroutput";
 
 type UserProps = {
   start_code?: string;
+  code?: string;
+  setCode?: any;
 };
 
-function User({ start_code = "print('Hello, world!')" }: UserProps) {
-  const [code, setCode] = useState<string>(start_code);
+function User({ start_code = "print('Hello, world!')", code, setCode}: UserProps) {
   const [output, setOutput] = useState<string>("");
   const [pyodide, setPyodide] = useState<any>(null);
 
