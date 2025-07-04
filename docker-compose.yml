@@ -18,3 +18,5 @@ services:
     volumes:
       - ./backend:/app
       - ./problems:/app/problems
+    env_file:
+      - .env
