@@ -1,8 +1,8 @@
 # File: backend/utils/agent_tools/tool_impls.py
 
-def generate_code(client, language: str, description: str) -> str:
+def generate_code(client, language: str, description: str, model="gpt-4.1-mini") -> str:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=model,
         messages=[
             {"role": "system", "content": "You are a helpful code generator. Only give the Python code as your output answering the requirements. Omit the first and last line of the output."},
             {"role": "user", "content": f"Write a {language} program to: {description}"}
@@ -11,9 +11,9 @@ def generate_code(client, language: str, description: str) -> str:
     return response.choices[0].message.content
 
 
-def update_python_code(client, original_code: str, requirement: str) -> str:
+def update_python_code(client, original_code: str, requirement: str, model="gpt-4.1-mini") -> str:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=model,
         messages=[
             {"role": "system", "content": "You are a Python coding tool. Only give the Python code as your output answering the requirements. Omit the first and last line of the updated output."},
             {"role": "user", "content": f"Update this code:\n\n{original_code}\n\nRequirement: {requirement}"}
@@ -22,9 +22,9 @@ def update_python_code(client, original_code: str, requirement: str) -> str:
     return response.choices[0].message.content
 
 
-def explain_code(client, code: str) -> str:
+def explain_code(client, code: str, model="gpt-4.1-mini") -> str:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=model,
         messages=[
             {"role": "system", "content": "You are a code explainer. Respond with a plain English explanation."},
             {"role": "user", "content": f"What does this code do?\n\n{code}"}
