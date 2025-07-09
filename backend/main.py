@@ -57,6 +57,7 @@ async def chat_endpoint(request: Request):
 
     user_code = data.get("user_code", "")
     agent_code = data.get("agent_code", "")
+    problem_statement = data.get("problem_statement", "")
 
     user_message = messages[-1]["content"]
     chat_history = messages[:-1]
@@ -67,7 +68,8 @@ async def chat_endpoint(request: Request):
             chat_history=chat_history,
             user_code=user_code,
             agent_code=agent_code,
-            model="gpt-4o"
+            problem_statement=problem_statement,
+            model="gpt-4.1-mini", # A cheap model for testing purposes
         )
 
         return {

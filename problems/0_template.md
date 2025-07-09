@@ -1,11 +1,13 @@
 ---
-title: "Template Problem"
-description: "This is a template for creating new problems."
+title: "Nimm Game Problem"
+description: "Nimm is a simple turn-based game where players take turns removing 1 or 2 stones from a shared pile, and the player who takes the last stone loses. In this version, the task is to simulate a single-player version where a loop repeatedly asks the user how many stones to take, updates the total, and ends when no stones remain. \n\n This problem is designed to teach basic control flow concepts — especially loops, conditionals, and user input."
 difficulty: "Easy"
 tags:
   - python
   - control flow
-author: "Your Name"
+  - conditionals
+  - user input
+author: "Lucas"
 created_at: "2025-06-24"
 update_log:
   - date: "2025-06-24"
@@ -68,17 +70,7 @@ Game over
 
 ## Evaluation
 
-## System Prompt
-
----
-# Interface
-
-## User Input
-```python
-
-```
-
-## Agent Input
+## Suggested Answer
 ```python
 # Start with 20 stones
 stones = 20
@@ -92,6 +84,24 @@ while stones > 0:
 
 # End of the game
 print("Game over")
+```
+
+## System Prompt
+
+---
+# Interface
+
+## User Input
+```python
+# Start your code here :D
+
+```
+
+## Agent Input
+```python
+# Start with 20 stones
+stones = 20
+
 ```
 
 

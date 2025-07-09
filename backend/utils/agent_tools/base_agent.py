@@ -42,23 +42,41 @@ class Agent:
     def __init__(self, openai_client):
         self.openai_client = openai_client
 
-    def agent_respond(self, user_message, chat_history=None, user_code=None, agent_code=None, model="gpt-4o"):
-        messages = [{"role": "system", "content": system_prompt}]
+    def agent_respond(self, user_message, model="gpt-4.1-mini", 
+                      chat_history=None, problem_statement=None, 
+                      user_code=None, user_output=None,
+                      agent_code=None, agent_output=None):
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            # Global state variables
+            {"role": "system", "content": f"""
+            ```state
+            [global_state]
+            
+            problem_statement: 
+            {problem_statement}
+
+            Current User Code:
+            {user_code}
+
+            Current Agent Code:
+            {agent_code}
+
+            User Output associated with the last user code:
+            {user_output}
+
+            Agent Output associated with the last agent code:
+            {agent_output}
+
+            [/global_state]
+            ```
+            """
+            }
+        ]
 
         if chat_history:
             messages.extend(chat_history)
-
-        if user_code:
-            messages.append({
-                "role": "user",
-                "content": f"Current user code:\n```python\n{user_code}\n```"
-            })
-
-        if agent_code:
-            messages.append({
-                "role": "assistant",
-                "content": f"Assistant's last generated code:\n```python\n{agent_code}\n```"
-            })
 
         messages.append({"role": "user", "content": user_message})
 

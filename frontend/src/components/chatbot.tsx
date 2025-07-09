@@ -8,7 +8,7 @@ type ChatbotProps = {
   setAgentCode?: any;
 };
 
-function Chatbot({ isOpen, userCode, setUserCode, agentCode, setAgentCode }: ChatbotProps) {
+function Chatbot({ problemStatement, isOpen, userCode, setUserCode, agentCode, setAgentCode }: ChatbotProps) {
     const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [input, setInput] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -35,6 +35,7 @@ function Chatbot({ isOpen, userCode, setUserCode, agentCode, setAgentCode }: Cha
                     messages: updatedMessages,
                     user_code: userCode,
                     agent_code: agentCode,
+                    problem_statement: problemStatement,
                 }),
             });
 

@@ -4,7 +4,7 @@ import glob
 import frontmatter
 import re
 
-PROBLEMS_DIR = "/app/problems"
+PROBLEMS_DIR = "problems"
 
 def load_problem(problem_id: str):
     """
@@ -19,6 +19,14 @@ def load_problem(problem_id: str):
     post = frontmatter.load(path)
     md_content = post.content
 
+    # Extract Problem Statement
+    match = re.search(r"(# Problem Statement.*?)^## Evaluation", md_content, re.DOTALL | re.MULTILINE)
+    problem_statement = match.group(1).strip() if match else ""
+
+    # Extract user input block
+    match = re.search(r"## User Input[\s\S]*?```python\s*([\s\S]*?)```", md_content)
+    user_code = match.group(1).strip() if match else ""
+
     # Extract agent input block
     match = re.search(r"## Agent Input[\s\S]*?```python\s*([\s\S]*?)```", md_content)
     agent_code = match.group(1).strip() if match else ""
@@ -30,7 +38,9 @@ def load_problem(problem_id: str):
         "difficulty": post.get("difficulty", ""),
         "tags": post.get("tags", []),
         "author": post.get("author", ""),
+        "problem_statement": problem_statement,
         "agent_code": agent_code,
+        "user_code": user_code,
     }
 
 def list_all_problems():
