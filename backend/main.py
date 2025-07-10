@@ -55,10 +55,13 @@ async def chat_endpoint(request: Request):
     if messages[-1].get("role") != "user":
         return JSONResponse(status_code=400, content={"error": "Last message must be from user"})
 
-    user_code = data.get("user_code", "")
-    agent_code = data.get("agent_code", "")
     problem_statement = data.get("problem_statement", "")
 
+    user_code_t0 = data.get("user_code_t0", "")
+    user_code_t1 = data.get("user_code_t1", "")
+    agent_code_t0 = data.get("agent_code_t0", "")
+    agent_code_t1 = data.get("agent_code_t1", "")
+    
     user_message = messages[-1]["content"]
     chat_history = messages[:-1]
 
@@ -66,8 +69,10 @@ async def chat_endpoint(request: Request):
         assistant_response = agent.agent_respond(
             user_message=user_message,
             chat_history=chat_history,
-            user_code=user_code,
-            agent_code=agent_code,
+            user_code_t0=user_code_t0,
+            user_code_t1=user_code_t1,
+            agent_code_t0=agent_code_t0,
+            agent_code_t1=agent_code_t1,
             problem_statement=problem_statement,
             model="gpt-4.1-mini", # A cheap model for testing purposes
         )

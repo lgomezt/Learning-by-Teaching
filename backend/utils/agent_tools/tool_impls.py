@@ -1,8 +1,17 @@
 # File: backend/utils/agent_tools/tool_impls.py
 
-def generate_code(client, language: str, description: str, model="gpt-4.1-mini") -> str:
+def generate_code(client,
+                  model="gpt-4.1-mini",
+                  user_message=None,
+                  problem_statement=None,
+                  user_code_t0=None,
+                  user_code_t1=None,
+                  user_output=None,
+                  agent_code_t0=None,
+                  agent_code_t1=None,
+                  agent_output=None  
+                  ) -> str:
     # TODO: System prompt should come from template.md or similar
-    # 
 
     system_prompt = """
     You are a Python code-editing assistant that helps a learner by incrementally improving a program. You never solve the full problem at once. You only make one small, meaningful change to your own version of the agent code and output the full modified program. You must include a short, focused comment on the line you changed, added, or removed, but write no other explanation.
@@ -13,7 +22,7 @@ def generate_code(client, language: str, description: str, model="gpt-4.1-mini")
     2. Read the **user's most recent message**. Determine what the user is asking, trying to do, or is confused about. This reveals where their attention is.
     3. Compare the **user's previous code** and their **latest version**. Identify exactly what changed and where. Combine that with the user's output to infer what they were attempting and whether they are heading in the right direction.
     4. Review the **agent's previous code** (your last response). Understand what you were trying to do in the last step. Compare this to your own previous version (if available), so you see what direction your edits were taking.
-    5. Compare your code to the user’s code. Assess:
+    5. Compare your code to the user's code. Assess:
     - Is the user imitating you or diverging?
     - Does the user have a better solution?
     - Is your code confusing or failing to guide them effectively?
@@ -37,13 +46,48 @@ def generate_code(client, language: str, description: str, model="gpt-4.1-mini")
     Your thinking process should be internal. Do not output your reasoning—only the code.
     """
 
+    messages = [
+        {"role": "system", "content": system_prompt},
+        # Global state variables
+        {"role": "system", "content": f"""
+        ```state
+        [global_state]
+
+        problem_statement:
+        {problem_statement}
+
+        [user_code]
+        user previous code (t0):
+        {user_code_t0}
+
+        user current code (t1):
+        {user_code_t1}
+
+        user_output:
+        {user_output if user_output else "Not provided"}
+
+        [agent_code]
+        agent previous code (t0):
+        {agent_code_t0}
+
+        agent current code (t1):
+        {agent_code_t1}
+
+        agent_output:
+        {agent_output if agent_output else "Not provided"}
+
+        [/global_state]
+        ```
+        """
+        }
+    ]
+
+    messages.append({"role": "user", "content": user_message})
+    
     # Add user code, user previous code, agent code, and agent previous code to the system prompt and the output
     response = client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Write a {language} program to: {description}"}
-        ]
+        messages=messages
     )
     return response.choices[0].message.content
 

@@ -2,13 +2,24 @@ import { useState, useEffect, useRef } from "react";
 
 type ChatbotProps = {
   isOpen: boolean;
-  userCode?: string;
-  setUserCode?: any;
-  agentCode?: string;
-  setAgentCode?: any;
+  problemStatement: string;
+  userCodeT0: string;
+  userCodeT1: string;
+  agentCodeT0: string;
+  agentCodeT1: string;
+  onAgentCodeUpdate: (newCode: string) => void;
 };
 
-function Chatbot({ problemStatement, isOpen, userCode, setUserCode, agentCode, setAgentCode }: ChatbotProps) {
+function Chatbot({ 
+    isOpen, 
+    problemStatement, 
+    userCodeT0,
+    userCodeT1,
+    agentCodeT0,
+    agentCodeT1,
+    onAgentCodeUpdate,
+}: ChatbotProps) {
+
     const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [input, setInput] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -25,17 +36,17 @@ function Chatbot({ problemStatement, isOpen, userCode, setUserCode, agentCode, s
         setMessages(updatedMessages);
         setInput("");
 
-        console.log(userCode);
-
         try {
             const res = await fetch("http://localhost:8000/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     messages: updatedMessages,
-                    user_code: userCode,
-                    agent_code: agentCode,
                     problem_statement: problemStatement,
+                    user_code_t0: userCodeT0,
+                    user_code_t1: userCodeT1,
+                    agent_code_t0: agentCodeT0,
+                    agent_code_t1: agentCodeT1,
                 }),
             });
 
@@ -47,7 +58,7 @@ function Chatbot({ problemStatement, isOpen, userCode, setUserCode, agentCode, s
 
             // Update agent code if backend returned new or modified code
             if (data.updated_code) {
-                setAgentCode(data.updated_code);
+                onAgentCodeUpdate(data.updated_code);
             }
 
             // Append assistant's response message

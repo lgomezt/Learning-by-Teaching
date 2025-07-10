@@ -5,10 +5,17 @@ import UserOutput from "./useroutput";
 type UserProps = {
   start_code?: string;
   code?: string;
-  setCode?: any;
+  setCode?: (code: string) => void;
+  onCommit?: () => void; 
 };
 
-function User({ start_code = "print('Hello, world!')", code, setCode}: UserProps) {
+function User({ 
+  start_code = "print('Hello, world!')", 
+  code, 
+  setCode, 
+  onCommit 
+}: UserProps) {
+
   const [output, setOutput] = useState<string>("");
   const [pyodide, setPyodide] = useState<any>(null);
 
@@ -28,7 +35,12 @@ function User({ start_code = "print('Hello, world!')", code, setCode}: UserProps
     load();
   }, []);
 
+  // Called when the user presses "Run".
+  // Before executing, it promotes the current live code to a committed version (T1),
+  // which then becomes part of the tracked state used by the agent for reasoning.
   async function runCode() {
+    // Update the code T1 and T0 states
+    if (onCommit) onCommit(); 
     if (!pyodide) return;
     setOutput("");
     // Capture output

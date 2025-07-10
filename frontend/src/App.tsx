@@ -9,17 +9,72 @@ import User from './components/user.tsx';
 import { fetchProblem } from './utils/api';
 
 function App() {
-    const [agentCode, setAgentCode] = useState<string>("");
-    const [userCode, setUserCode] = useState<string>("");
     const [problemStatement, setProblemStatement] = useState<string>("");
+
+    // Committed code states (used for backend context tracking).
+    // T0 = previous version, T1 = current version.
+    // These are only updated when the user signals intent (e.g. by clicking Run or interacting with the chatbot).
+    const [userCodeT0, setUserCodeT0] = useState<string>("");
+    const [userCodeT1, setUserCodeT1] = useState<string>("");
+
+    const [agentCodeT0, setAgentCodeT0] = useState<string>("");
+    const [agentCodeT1, setAgentCodeT1] = useState<string>("");
+
+    const [userOutput, setUserOutput] = useState<string>("");
+    const [agentOutput, setAgentOutput] = useState<string>("");
+
+    // Live-in-editor code states.
+    // These store what the user or agent is *currently typing or editing* in real-time.
+    // They update on every keystroke but do NOT count as meaningful code revisions
+    // until the user explicitly submits the code (e.g., by pressing "Run" or sending a message).
+    const [liveUserCode, setLiveUserCode] = useState<string>("");
+    const [liveAgentCode, setLiveAgentCode] = useState<string>("");
+
+    // We should move this to utils later
+    // This function handles the change in code for both user and agent.
+    // It shifts the previous code (t0) to the current code (t1)
+    // and updates the current code (t1) with the new code.
+    // This is used to track the evolution of code over time.
+    function handleCodeChange(
+        newCode: string,
+        codeT1: string,
+        setCodeT0: (v: string) => void,
+        setCodeT1: (v: string) => void,
+        ) {
+            if (newCode !== codeT1) {
+                setCodeT0(codeT1); // shift current to previous
+                setCodeT1(newCode); // update current
+            }
+        }
+
+    function commitUserCode() {
+        handleCodeChange(liveUserCode, userCodeT1, setUserCodeT0, setUserCodeT1);
+    }
+
+    function commitAgentCode() {
+        handleCodeChange(liveAgentCode, agentCodeT1, setAgentCodeT0, setAgentCodeT1);
+    }
 
     useEffect(() => {
         async function loadProblem() {
             const problem = await fetchProblem("0_template");
             console.log("Loaded problem:", problem);
-            setAgentCode(problem.agent_code || "");
-            setUserCode(problem.user_code || "");
+            
+            // Load initial coding state
+            const agentInit = problem.agent_code || "";
+            const userInit = problem.user_code || "";
+
+            // Initialize both t0 and t1
+            setAgentCodeT0("");
+            setUserCodeT0("");
+            setAgentCodeT1(agentInit);
+            setUserCodeT1(userInit);
+
+            // Retrieve the problem statement
             setProblemStatement(problem.problem_statement || "");
+
+            // Retrieve the system prompt for the behavior of the agent
+            const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
         }
         
         loadProblem();
@@ -27,15 +82,21 @@ function App() {
 
     return ( 
     <>
-        <Header></Header>
+        <Header />
         <div className="flex h-[calc(100vh-5rem)]">
             <div id="container-left" className="flex flex-col flex-1">
-                <LeftPanel problemStatement={problemStatement} userCode={userCode} setUserCode={setUserCode} agentCode={agentCode} setAgentCode={setAgentCode}></LeftPanel>
-                {/* <Goal></Goal> */}
+                <LeftPanel
+                    problemStatement={problemStatement}
+                    userCodeT0={userCodeT0}
+                    userCodeT1={userCodeT1}
+                    agentCodeT0={agentCodeT0}
+                    agentCodeT1={agentCodeT1}
+                    handleAgentCodeChange={commitAgentCode}
+                />
             </div>
             <div className="flex flex-2 flex-col">
-                <User start_code={userCode} code={userCode} setCode={setUserCode}></User>
-                <User start_code={agentCode} code={agentCode} setCode={setAgentCode}></User>
+                <User start_code={userCodeT1} code={liveUserCode} setCode={setLiveUserCode} onCommit={commitUserCode} />
+                <User start_code={agentCodeT1} code={liveAgentCode} setCode={setLiveAgentCode} onCommit={commitAgentCode} />
             </div>
         </div>
     </> )

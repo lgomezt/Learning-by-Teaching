@@ -28,7 +28,7 @@ You do not perform changes directly if a tool exists to handle it.
 ## When to Use Each Tool:
 
 1. **generate_code**
-    Use this when the user asks you to write code from scratch, based on a natural language description.
+    Use this when the user has modified their code or asked a new question, and you need to propose a small change to your own (agent) code in response. You will compare both the user's and your own code between t0 and t1, along with recent output and the user's message, to suggest the next incremental change.
 
 2. **update_agent_code**
     Use this when the user wants to be shown or asks about how to code a specific thing in Python.
@@ -42,10 +42,19 @@ class Agent:
     def __init__(self, openai_client):
         self.openai_client = openai_client
 
-    def agent_respond(self, user_message, model="gpt-4.1-mini", 
-                      chat_history=None, problem_statement=None, 
-                      user_code=None, user_output=None,
-                      agent_code=None, agent_output=None):
+    def agent_respond(
+        self,
+        user_message,
+        model="gpt-4.1-mini",
+        chat_history=None,
+        problem_statement=None,
+        user_code_t0=None,
+        user_code_t1=None,
+        user_output=None,
+        agent_code_t0=None,
+        agent_code_t1=None,
+        agent_output=None
+    ):
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -53,20 +62,28 @@ class Agent:
             {"role": "system", "content": f"""
             ```state
             [global_state]
-            
-            problem_statement: 
+
+            problem_statement:
             {problem_statement}
 
-            Current User Code:
-            {user_code}
+            [user_code]
+            previous (t0):
+            {user_code_t0}
 
-            Current Agent Code:
-            {agent_code}
+            current (t1):
+            {user_code_t1}
 
-            User Output associated with the last user code:
+            user_output:
             {user_output}
 
-            Agent Output associated with the last agent code:
+            [agent_code]
+            previous (t0):
+            {agent_code_t0}
+
+            current (t1):
+            {agent_code_t1}
+
+            agent_output:
             {agent_output}
 
             [/global_state]
