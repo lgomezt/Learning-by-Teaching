@@ -5,10 +5,12 @@ import Header from './components/header';
 import LeftPanel from './components/leftpanel';
 //import Goal from './components/goal';
 import User from './components/user.tsx';
-
 import { fetchProblem } from './utils/api';
+import { useFile } from "../context/filecontext.tsx";
 
 function App() {
+    const { file } = useFile();
+
     const [problemStatement, setProblemStatement] = useState<string>("");
 
     // Committed code states (used for backend context tracking).
@@ -57,28 +59,33 @@ function App() {
 
     useEffect(() => {
         async function loadProblem() {
-            const problem = await fetchProblem("0_template");
-            console.log("Loaded problem:", problem);
-            
-            // Load initial coding state
-            const agentInit = problem.agent_code || "";
-            const userInit = problem.user_code || "";
+            console.log(file);
+            if (file !== null) {
+                console.log("hello");
+                const problem = await fetchProblem(file);
+                console.log(problem);
+                console.log("Loaded problem:", problem);
+                
+                // Load initial coding state
+                const agentInit = problem.agent_code || "";
+                const userInit = problem.user_code || "";
 
-            // Initialize both t0 and t1
-            setAgentCodeT0("");
-            setUserCodeT0("");
-            setAgentCodeT1(agentInit);
-            setUserCodeT1(userInit);
+                // Initialize both t0 and t1
+                setAgentCodeT0("");
+                setUserCodeT0("");
+                setAgentCodeT1(agentInit);
+                setUserCodeT1(userInit);
 
-            // Retrieve the problem statement
-            setProblemStatement(problem.problem_statement || "");
+                // Retrieve the problem statement
+                setProblemStatement(problem.problem_statement || "");
 
-            // Retrieve the system prompt for the behavior of the agent
-            const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
+                // Retrieve the system prompt for the behavior of the agent
+                const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
+            }
         }
         
         loadProblem();
-    }, []);
+    }, [file]);
 
     return ( 
     <>

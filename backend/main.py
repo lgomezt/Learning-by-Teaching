@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
 from utils.agent_tools.base_agent import Agent
+from utils.parse_problem import load_problem_from_file
 
 # Importing utility functions
 from utils.parse_problem import load_problem, list_all_problems
@@ -85,3 +86,13 @@ async def chat_endpoint(request: Request):
     except Exception as e:
         print("Agent error:", e)
         return JSONResponse(status_code=500, content={"error": "Agent processing failed"})
+
+@app.post("/api/upload")
+async def upload_problem(file: UploadFile = File(...)):
+    try:
+        # read the file content manually, because load_problem_from_file expects it
+        content = await file.read()
+        return load_problem_from_file(content.decode("utf-8"))
+    except Exception as e:
+        print("Error parsing uploaded file:", e)
+        return JSONResponse(status_code=400, content={"error": "Invalid file"})

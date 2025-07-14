@@ -5,3 +5,4 @@ python-frontmatter
 pydantic
 openai
 python-dotenv
+python-multipart

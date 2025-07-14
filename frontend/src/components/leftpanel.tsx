@@ -1,6 +1,6 @@
-import Sidebar from "./sidebar";
 import { useState } from "react";
 import Chatbot from "./chatbot";
+import Goal from "./goal";
 
 type LeftPanelProps = {
   problemStatement: string;
@@ -24,10 +24,10 @@ function LeftPanel({
 
     return ( 
     <>
-        <div className="flex flex-row flex-4 border-1 bg-[#DEECF4] border-black">
-            <Sidebar isOpen={isOpen} toggle={() => setIsOpen(!isOpen)} />
+        <div className="flex flex-4 flex-col h-[calc(99vh-5rem)]">
             <Chatbot
                 isOpen={isOpen}
+                setIsOpen={setIsOpen}
                 problemStatement={problemStatement}
                 userCodeT0={userCodeT0}
                 userCodeT1={userCodeT1}
@@ -35,6 +35,7 @@ function LeftPanel({
                 agentCodeT1={agentCodeT1}
                 onAgentCodeUpdate={handleAgentCodeChange}
             />
+            <Goal text={problemStatement}></Goal>
         </div>
     </> 
     )
