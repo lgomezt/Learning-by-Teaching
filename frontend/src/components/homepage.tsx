@@ -1,8 +1,7 @@
 type HomePageProps = {
-  autoscroll?: (code: string) => void;
-  navigateToIDE?: () => void;
+  autoscroll: (page: string) => void;
 };
-export default function HomePage({ autoscroll, navigateToIDE } : HomePageProps) {
+export default function HomePage({ autoscroll } : HomePageProps) {
   return ( <>
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50 to-green-100"></div>
@@ -28,7 +27,7 @@ export default function HomePage({ autoscroll, navigateToIDE } : HomePageProps) 
           >
           Upload Lesson Plan
           </button>
-          <button onClick={navigateToIDE}
+          <button onClick={() => autoscroll("lessons")}
           className="bg-white/20 backdrop-blur-sm border border-white/30 text-gray-700 font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-white/30">
               Enter IDE
           </button>

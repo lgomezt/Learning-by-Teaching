@@ -1,14 +1,9 @@
-import { useNavigate } from "react-router-dom";
 import Navbar from "./navbar";
 import HomePage from "./homepage";
 import UploadPage from "./uploadpage";
+import FileTable from "./filetable";
 
 export default function LandingPage() {
-    const navigate = useNavigate();
-    
-    const navigateToIDE = () => {
-        navigate('/ide');
-    };
 
     const autoscroll = (id: string) => {
         const uploadSection = document.getElementById(id);
@@ -22,15 +17,20 @@ export default function LandingPage() {
 
         {/* First Page */}
         <section id="home" className="h-screen relative overflow-hidden flex items-center justify-center">
-            <HomePage autoscroll={autoscroll} navigateToIDE={navigateToIDE}></HomePage>
+            <HomePage autoscroll={autoscroll}></HomePage>
         </section>
 
         {/* Second Page */}
-        <section id="upload" className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center py-20">
-          <UploadPage navigateToIDE={navigateToIDE}></UploadPage>
+        <section id="upload" className="min-h-screen bg-gradient-to-b from-slate-200 via-white to-slate-200 flex items-center justify-center py-20">
+          <UploadPage autoscroll={autoscroll}></UploadPage>
         </section>
 
         {/* Third Page */}
+        <section id="lessons" className="min-h-screen bg-gradient-to-b from-slate-200 to-slate-300 flex items-center justify-center py-20">
+          <FileTable></FileTable>
+        </section>
+
+        {/* Fourth Page */}
         <section id="about" className="h-screen bg-white flex items-center justify-center">
             <div>
                 About Us

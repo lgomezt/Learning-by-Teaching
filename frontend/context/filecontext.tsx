@@ -1,23 +1,28 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 type FileContextType = {
-  file: File | null;
-  setFile: (file: File | null) => void;
+  files: File[];
+  setFiles: (files: File[]) => void;
+
+  selectedFile: File | null;
+  setSelectedFile: (file: File | null) => void;
 };
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 export function FileProvider({ children }: { children: ReactNode }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   return (
-    <FileContext.Provider value={{ file, setFile }}>
+    <FileContext.Provider value={{ files, setFiles, selectedFile, setSelectedFile }}>
       {children}
     </FileContext.Provider>
   );
 }
 
-export function useFile() {
+export function useFiles() {
   const context = useContext(FileContext);
-  if (!context) throw new Error("useFile must be used within FileProvider");
+  if (!context) throw new Error("useFiles must be used within FileProvider");
   return context;
 }

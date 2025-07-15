@@ -6,10 +6,10 @@ import LeftPanel from './components/leftpanel';
 //import Goal from './components/goal';
 import User from './components/user.tsx';
 import { fetchProblem } from './utils/api';
-import { useFile } from "../context/filecontext.tsx";
+import { useFiles } from "../context/filecontext.tsx";
 
 function App() {
-    const { file } = useFile();
+    const { selectedFile } = useFiles();
 
     const [problemStatement, setProblemStatement] = useState<string>("");
 
@@ -59,11 +59,8 @@ function App() {
 
     useEffect(() => {
         async function loadProblem() {
-            console.log(file);
-            if (file !== null) {
-                console.log("hello");
-                const problem = await fetchProblem(file);
-                console.log(problem);
+            if (selectedFile != null) {
+                const problem = await fetchProblem(selectedFile);
                 console.log("Loaded problem:", problem);
                 
                 // Load initial coding state
@@ -85,7 +82,7 @@ function App() {
         }
         
         loadProblem();
-    }, [file]);
+    }, [selectedFile]);
 
     return ( 
     <>

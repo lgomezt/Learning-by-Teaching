@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useFile } from "../../context/filecontext";
+import { useFiles } from "../../context/filecontext";
 
 type UploadPageProps = {
-  navigateToIDE: () => void;
+  autoscroll: (page: string) => void;
 };
 
-export default function UploadPage({ navigateToIDE }: UploadPageProps) {
-  const { file, setFile } = useFile();
+export default function UploadPage({ autoscroll }: UploadPageProps) {
+  const { files, setFiles } = useFiles();
   const [dragOver, setDragOver] = useState(false);
 
   const handleFileUpload = (f: File) => {
     if (f && f.name.endsWith(".md")) {
       console.log(f.name);
-      setFile(f);
+      setFiles([...files, f]);
     }
   };
 
@@ -96,7 +96,7 @@ export default function UploadPage({ navigateToIDE }: UploadPageProps) {
               Choose File
             </label>
 
-            {file?.name && (
+            {files.length > 0 && files[files.length - 1]?.name && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6 p-4 bg-green-50 border border-green-200 rounded-2xl">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -106,7 +106,7 @@ export default function UploadPage({ navigateToIDE }: UploadPageProps) {
                   </div>
                   <div className="text-left">
                     <p className="text-green-800 font-medium">File uploaded successfully</p>
-                    <p className="text-green-600 text-sm">{file.name}</p>
+                    <p className="text-green-600 text-sm">{files.length > 0 && files[files.length - 1]?.name}</p>
                   </div>
                 </div>
               </motion.div>
@@ -164,7 +164,7 @@ export default function UploadPage({ navigateToIDE }: UploadPageProps) {
         </svg>
         Download Template File
         </button>
-        <button onClick={navigateToIDE}
+        <button onClick={() => autoscroll("lessons")}
           className="group bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-8 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2">
           <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
