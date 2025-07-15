@@ -23,6 +23,10 @@ def parse_problem_content(content: str, metadata: dict = None):
     match = re.search(r"(# Problem Statement.*?)^## Evaluation", content, re.DOTALL | re.MULTILINE)
     problem_statement = match.group(1).strip() if match else ""
 
+    # Extract Example Output block
+    match = re.search(r"\*\*Example output:\*\*\s*```(?:\w+)?\s*([\s\S]*?)```", content)
+    example_output = match.group(1).strip() if match else ""
+
     # Extract user input block
     match = re.search(r"## User Input[\s\S]*?```python\s*([\s\S]*?)```", content)
     user_code = match.group(1).strip() if match else ""
@@ -38,6 +42,7 @@ def parse_problem_content(content: str, metadata: dict = None):
         "tags": metadata.get("tags", []),
         "author": metadata.get("author", ""),
         "problem_statement": problem_statement,
+        "example_output": example_output,
         "agent_code": agent_code,
         "user_code": user_code,
     }

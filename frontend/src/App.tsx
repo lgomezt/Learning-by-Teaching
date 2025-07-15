@@ -32,6 +32,8 @@ function App() {
     const [liveUserCode, setLiveUserCode] = useState<string>("");
     const [liveAgentCode, setLiveAgentCode] = useState<string>("");
 
+    const [goal, setGoal] = useState<string>("");
+
     // We should move this to utils later
     // This function handles the change in code for both user and agent.
     // It shifts the previous code (t0) to the current code (t1)
@@ -66,6 +68,7 @@ function App() {
                 // Load initial coding state
                 const agentInit = problem.agent_code || "";
                 const userInit = problem.user_code || "";
+                const exampleOutput = problem.example_output || "";
 
                 // Initialize both t0 and t1
                 setAgentCodeT0("");
@@ -75,6 +78,8 @@ function App() {
 
                 // Retrieve the problem statement
                 setProblemStatement(problem.problem_statement || "");
+
+                setGoal(exampleOutput);
 
                 // Retrieve the system prompt for the behavior of the agent
                 const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
@@ -91,6 +96,7 @@ function App() {
             <div id="container-left" className="flex flex-col flex-1">
                 <LeftPanel
                     problemStatement={problemStatement}
+                    goal={goal}
                     userCodeT0={userCodeT0}
                     userCodeT1={userCodeT1}
                     agentCodeT0={agentCodeT0}

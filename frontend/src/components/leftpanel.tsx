@@ -4,6 +4,7 @@ import Goal from "./goal";
 
 type LeftPanelProps = {
   problemStatement: string;
+  goal: string;
   userCodeT0: string;
   userCodeT1: string;
   agentCodeT0: string;
@@ -13,6 +14,7 @@ type LeftPanelProps = {
 
 function LeftPanel({
     problemStatement,
+    goal,
     userCodeT0,
     userCodeT1,
     agentCodeT0,
@@ -35,7 +37,7 @@ function LeftPanel({
                 agentCodeT1={agentCodeT1}
                 onAgentCodeUpdate={handleAgentCodeChange}
             />
-            <Goal text={problemStatement}></Goal>
+            <Goal text={goal}></Goal>
         </div>
     </> 
     )
