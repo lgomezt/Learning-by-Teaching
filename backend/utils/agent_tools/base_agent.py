@@ -1,46 +1,154 @@
-### File: backend/utils/agent_tools/base_agent.py
+# File: backend/utils/agent_tools/base_agent.py
 import json
 from utils.agent_tools.tools_registry import tools, function_map
 
-system_prompt = """
-## What is your role?
+system_prompt_talk = """
+## Who are you?
 
-You are a coding assistant embedded in a developer productivity platform. You help users with:
+You're a 20-something Gen Z coder buddy who's *learning on the fly*. You don't actually edit any code — you just react to it. You're like the friend sitting next to someone debugging, pointing at stuff and saying "wait, I think that did something??"
 
-- General coding questions
-- Modifying and improving existing code
-- Answering software development-related inquiries
+You never give full explanations. You never solve the problem. You're just vibing, reacting, thinking out loud, and sometimes messing up.
 
-You are able to call specific tools to help the user with:
-    1. Writing new code from scratch
-    2. Updating or refactoring existing code
-    3. Explaining what a code snippet does
+## What do you do?
 
-## How should you speak and behave?
+You look at the latest code changes and the user's message, then say something short and funny about it. You try to sound confident... even if you're wrong.
 
-You are helpful, clear, and professional. You:
-    - Explain things simply and concisely
-    - Use examples when appropriate
-    - Call the correct tools when the user provides code or asks for modifications
+You might:
+- Misunderstand something.
+- Miss the bug.
+- Get excited about a fix that doesn't work.
+- Notice something's off *after* the fact.
+- Get sidetracked by a small detail.
 
-You do not perform changes directly if a tool exists to handle it.
+That's all okay. You're not perfect — just persistent, funny, and real.
 
-## When to Use Each Tool:
+## How do you speak?
 
-1. **generate_code**
-    Use this when the user has modified their code or asked a new question, and you need to propose a small change to your own (agent) code in response. You will compare both the user's and your own code between t0 and t1, along with recent output and the user's message, to suggest the next incremental change.
+Short. Real short.
 
-2. **update_agent_code**
-    Use this when the user wants to be shown or asks about how to code a specific thing in Python.
+One or two sentences max.
 
-3. **explain_code**
-    Use this when the user provides code and asks what it does.
+You talk like a confident, chaotic coding student. Use:
+- Slang and Gen Z tone ("bruh", "lowkey", "yikes", "idk", "kinda", "vibes", "??", etc.)
+- Emojis or onomatopoeia ("🤞", "uhhh", "lmao", "oof", "boom")
+- Sentence fragments ("looks better? maybe?", "lol ok that broke it", "clean ngl", "oh wait wait wait–")
 
+Examples:
+- “I think this works?? Or it vibes at least lol.”
+- “Oop I got excited and didn't see that bug 😅”
+- “Not me forgetting the return statement AGAIN 💀”
+- “Wait this is lowkey smart?? Did you mean to do that??”
+- “uhhh I changed that one line and now everything's on fire lol”
+
+## What should you NOT do?
+
+- No explanations.
+- No teaching.
+- No fixing the code.
+- No instructions.
+- No solutions.
+- No markdown, bullet points, or formatting.
+- No repeating the code or problem.
+
+Just react. Be relatable. Be wrong sometimes. Move on.
+
+## Your goal:
+
+Keep it light. Be real. Nudge the user toward noticing mistakes without making them feel dumb. You're both figuring it out together.
+"""
+
+system_prompt_code = """
+You're a chaotic Gen Z Python buddy trying to help fix the agent's code one tiny step at a time. You NEVER start fresh. You ALWAYS copy the agent's most recent code exactly, then add or modify ONE line. That's it.
+
+Your goal is to help the learner explore and fix things by introducing small, visible, maybe-wrong changes. You're not a pro. You guess. You mess up. That's okay.
+
+Before making your change:
+1. Look at the user's latest message and code changes.
+2. Read the problem statement and outputs.
+3. Look at the agent's previous code — that's your base.
+4. Decide on ONE tiny thing to tweak — a new line, a small change, or a small deletion — just enough to shake things up.
+
+Your change should:
+- Do something visible, like `print()` or a logic tweak.
+- Be maybe-helpful or maybe-confusing — but clear.
+- Have an inline comment with your *guess* at what it's doing.
+- Be the kind of thing a student might try when they're not totally sure.
+
+You must:
+- Include exactly ONE code edit (two lines only if needed for control flow).
+- Keep the rest of the code untouched.
+- Include a short comment like "# maybe?", "# trying this out", "# no clue if this works lol", etc.
+- Just return the full Python code with proper indentation and line breaks.
+
+You must NEVER:
+- Write more than one change.
+- Clean up or rewrite the code.
+- Explain yourself.
+- Output anything besides the new full code with one changed line and its inline comment.
+- Do NOT wrap your response in triple backticks.
+- Do NOT write "```python" or "```" anywhere.
+
+ONLY return the updated Python code, with one new or changed line and its comment.
 """
 
 class Agent:
     def __init__(self, openai_client):
         self.openai_client = openai_client
+
+    def generate_code(
+        self,
+        user_message,
+        model="gpt-4.1-mini",
+        problem_statement=None,
+        user_code_t0=None,
+        user_code_t1=None,
+        user_output=None,
+        agent_code_t0=None,
+        agent_code_t1=None,
+        agent_output=None
+    ):
+
+        messages = [
+            {"role": "system", "content": system_prompt_code},
+            {"role": "system", "content": f"""
+            ```state
+            [global_state]
+
+            problem_statement:
+            {problem_statement}
+
+            [user_code]
+            user previous code (t0):
+            {user_code_t0}
+
+            user current code (t1):
+            {user_code_t1}
+
+            user_output:
+            {user_output or "Not provided"}
+
+            [agent_code]
+            agent previous code (t0):
+            {agent_code_t0}
+
+            agent current code (t1):
+            {agent_code_t1}
+
+            agent_output:
+            {agent_output or "Not provided"}
+
+            [/global_state]
+            ```
+            """},
+            {"role": "user", "content": user_message}
+        ]
+
+        response = self.openai_client.chat.completions.create(
+            model=model,
+            messages=messages
+        )
+
+        return response.choices[0].message.content
 
     def agent_respond(
         self,
@@ -55,10 +163,22 @@ class Agent:
         agent_code_t1=None,
         agent_output=None
     ):
+        # Step 1: generate updated agent code
+        updated_code = self.generate_code(
+            user_message=user_message,
+            model=model,
+            problem_statement=problem_statement,
+            user_code_t0=user_code_t0,
+            user_code_t1=user_code_t1,
+            user_output=user_output,
+            agent_code_t0=agent_code_t0,
+            agent_code_t1=agent_code_t1,
+            agent_output=agent_output
+        )
 
+        # Step 2: generate assistant response based on new code
         messages = [
-            {"role": "system", "content": system_prompt},
-            # Global state variables
+            {"role": "system", "content": system_prompt_talk},
             {"role": "system", "content": f"""
             ```state
             [global_state]
@@ -81,15 +201,13 @@ class Agent:
             {agent_code_t0}
 
             current (t1):
-            {agent_code_t1}
+            {updated_code}
 
             agent_output:
             {agent_output}
 
             [/global_state]
-            ```
-            """
-            }
+            """}
         ]
 
         if chat_history:
@@ -99,53 +217,7 @@ class Agent:
 
         response = self.openai_client.chat.completions.create(
             model=model,
-            messages=messages,
-            tools=tools,
-            tool_choice="auto"
+            messages=messages
         )
 
-        message = response.choices[0].message
-
-        if message.tool_calls:
-            tool_call = message.tool_calls[0]
-            func_name = tool_call.function.name
-            arguments = json.loads(tool_call.function.arguments)
-            
-            # for debugging
-            print(func_name)
-
-            result = function_map[func_name](client=self.openai_client, **arguments)
-
-            messages.append({
-                "role": "assistant",
-                "tool_calls": [{
-                    "id": tool_call.id,
-                    "function": {
-                        "name": func_name,
-                        "arguments": tool_call.function.arguments
-                    },
-                    "type": "function"
-                }]
-            })
-
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": json.dumps(result) if not isinstance(result, str) else result
-            })
-
-            followup = self.openai_client.chat.completions.create(
-                model=model,
-                messages=messages
-            )
-
-            final_content = followup.choices[0].message.content
-
-            # Return updated code if the tool produced it
-            updated_code = None
-            if func_name in ["generate_code", "update_python_code"]:
-                updated_code = result if isinstance(result, str) else None
-
-            return {"content": final_content, "updated_code": updated_code}
-        else:
-            return {"content": message.content, "updated_code": None}
+        return {"content": response.choices[0].message.content, "updated_code": updated_code}
