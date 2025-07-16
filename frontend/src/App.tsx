@@ -55,8 +55,13 @@ function App() {
         handleCodeChange(liveUserCode, userCodeT1, setUserCodeT0, setUserCodeT1);
     }
 
-    function commitAgentCode() {
-        handleCodeChange(liveAgentCode, agentCodeT1, setAgentCodeT0, setAgentCodeT1);
+    function commitAgentCode(newCode?: string) {
+        const codeToCommit = newCode || liveAgentCode;
+        if (newCode) {
+            setLiveAgentCode(newCode);
+        }
+        console.log("newCode:", newCode)
+        handleCodeChange(codeToCommit, agentCodeT1, setAgentCodeT0, setAgentCodeT1);
     }
 
     useEffect(() => {
