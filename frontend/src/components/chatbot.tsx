@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import Sidebar from "./sidebar";
 
 type ChatbotProps = {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
+  messages: ({ role: string; content: string }[]);
+  setMessages: React.Dispatch<React.SetStateAction<{ role: string; content: string }[]>>
   problemStatement: string;
   userCodeT0: string;
   userCodeT1: string;
@@ -12,9 +11,9 @@ type ChatbotProps = {
   onAgentCodeUpdate: (newCode: string) => void;
 };
 
-function Chatbot({ 
-    isOpen, 
-    setIsOpen,
+function Chatbot({
+    messages,
+    setMessages,
     problemStatement, 
     userCodeT0,
     userCodeT1,
@@ -23,12 +22,13 @@ function Chatbot({
     onAgentCodeUpdate,
 }: ChatbotProps) {
 
-    const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [input, setInput] = useState("");
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messages.length > 0) {
+            scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
     }, [messages]);
 
     async function sendMessage() {
@@ -71,47 +71,75 @@ function Chatbot({
             setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong..." }]);
         }
     }
-
+        
     return (
-        <div className="flex flex-row flex-2 min-h-0 border-1 bg-[#DEECF4] border-black">
-            {/*<Sidebar isOpen={isOpen} toggle={() => setIsOpen(!isOpen)} />*/}
+        <div className="flex flex-row flex-2 min-h-0 bg-slate-900 border-slate-700">
             <div className={`flex flex-col flex-2`}>
                 {/* Header */}
-                <div className="flex my-4 mx-15 p-2 bg-[#3a3a54] rounded-full items-center justify-center">
-                    <div className="h-3 w-3 bg-green-400 rounded-full mr-2"></div>
-                    <span className="text-white font-mono text-m font-semibold">AI Peer</span>
-                </div>
-                
-                {/* Chat Window */}
-                <div className={`flex-1 overflow-y-auto p-4 ${isOpen ? "w-[calc((100vw/3)-4rem)]" : "w-[calc(100vw/3)]"}`}>
-                {messages.map((msg, index) => (
-                    <div key={index} className={`mb-4 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className={`px-8 py-2 rounded-2xl ${msg.role === "user" ? "bg-blue-500 text-white" : "bg-gray-300 text-black"} overflow-auto whitespace-pre-wrap break-words`}>
-                            {msg.content}
+                <div className="p-4 bg-slate-800 border-b border-slate-700">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 className="text-m font-medium text-slate-100">Coding Peer</h2>
                         </div>
                     </div>
-                ))} <div ref={scrollRef}/>
                 </div>
 
-                {/* Input box */}
-                <div className="flex p-4">
-                    <input
-                        className="flex-1 border rounded-full px-6 py-2 mr-2 bg-white"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        placeholder="Type your message..."
-                    />
-                    <button
-                        onClick={sendMessage}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-                    >
-                        Send
-                    </button>
+                {/* Chat Window */}
+                <div className={`flex-1 ${messages.length > 0 ? 'overflow-y-auto' : ''} p-4 space-y-4`}>
+                    {messages.length === 0 ? (
+                        <div className="flex flex-col h-full items-center justify-center text-center text-slate-400">
+                            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4">
+                                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-medium mb-2">Start a conversation</h3>
+                            <p className="text-sm max-w-sm">Ask me anything about your code, get suggestions, or discuss the problem approach.</p>
+                        </div>
+                    ) : (
+                        messages.map((msg, index) => (
+                            <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
+                                    msg.role === "user" 
+                                        ? "bg-emerald-500 text-white rounded-br-md" 
+                                        : "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-md"
+                                } overflow-auto whitespace-pre-wrap break-words`}>
+                                    {msg.content}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                    <div ref={scrollRef}/>
+                </div>
+
+                {/* Input Box */}
+                <div className="flex p-4 bg-slate-800 border-t border-slate-700">
+                    <div className="flex-1 relative">
+                        <input
+                            className="w-full border border-slate-700 rounded-full px-6 py-3 pr-12 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder-slate-500 transition-all"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                            placeholder="Talk to your AI peer..."
+                        />
+                        <button
+                            onClick={sendMessage}
+                            disabled={!input.trim()}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 disabled:bg-slate-700 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                        >
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    );
-}
+    );}
 
 export default Chatbot;

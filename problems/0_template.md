@@ -1,7 +1,7 @@
 ---
 title: "Nimm Game Problem"
 description: "Nimm is a simple turn-based game where players take turns removing 1 or 2 stones from a shared pile, and the player who takes the last stone loses. In this version, the task is to simulate a single-player version where a loop repeatedly asks the user how many stones to take, updates the total, and ends when no stones remain. \n\n This problem is designed to teach basic control flow concepts — especially loops, conditionals, and user input."
-difficulty: "Easy"
+difficulty: "Hard"
 tags:
   - python
   - control flow
@@ -37,6 +37,7 @@ You’ll write a `loop` to remove stones from a pile.
 
 1. **Start with 20 stones.**
 
+**Milestone 2**
 2. **Repeat this process until there are zero stones left:**
     - Print how many stones are left.  
       _Example:_ `There are 20 stones left`
@@ -47,14 +48,15 @@ You’ll write a `loop` to remove stones from a pile.
     - Subtract that number of stones from the total.
     - Add an empty `print()` between turns (to make the output easier to read).
 
-3. **End the game when there are no stones left.**  
+**Milestone 3**
+1. **End the game when there are no stones left.**  
    _Print:_ `Game over`
 
 **Important:**  
 - For now, don’t worry about whose turn it is.  
 - Don’t worry about making sure the user enters only 1 or 2 stones — any number is fine in this step.
 
-**Example output:**  
+## Example output: 
 ```
 There are 20 stones left
 Would you like to remove 1 or 2 stones? 2
@@ -103,5 +105,3 @@ print("Game over")
 stones = 20
 
 ```
-
-

@@ -11,6 +11,8 @@ import { useFiles } from "../context/filecontext.tsx";
 function App() {
     const { selectedFile } = useFiles();
 
+    const [ title, setTitle ] = useState<string>("");
+
     const [problemStatement, setProblemStatement] = useState<string>("");
 
     // Committed code states (used for backend context tracking).
@@ -32,6 +34,11 @@ function App() {
     const [liveUserCode, setLiveUserCode] = useState<string>("");
     const [liveAgentCode, setLiveAgentCode] = useState<string>("");
 
+    const [difficulty, setDifficulty] = useState<string>("");
+    const [tags, setTags] = useState<string[]>([]);
+
+    const [description, setDescription] = useState<string>("");
+    const [milestones, setMilestones] = useState<{ number: number; content: string }[]>([]);
     const [goal, setGoal] = useState<string>("");
 
     // We should move this to utils later
@@ -73,7 +80,8 @@ function App() {
                 // Load initial coding state
                 const agentInit = problem.agent_code || "";
                 const userInit = problem.user_code || "";
-                const exampleOutput = problem.example_output || "";
+
+                setTitle(problem.title || "");
 
                 // Initialize both t0 and t1
                 setAgentCodeT0("");
@@ -81,10 +89,16 @@ function App() {
                 setAgentCodeT1(agentInit);
                 setUserCodeT1(userInit);
 
+                setDifficulty(problem.difficulty || "");
+                console.log(difficulty)
+                setTags(problem.tags || []);
+
                 // Retrieve the problem statement
                 setProblemStatement(problem.problem_statement || "");
-
-                setGoal(exampleOutput);
+               
+                setDescription(problem.description_block || "");
+                setMilestones(problem.milestones || []);
+                setGoal(problem.example_output || "");
 
                 // Retrieve the system prompt for the behavior of the agent
                 const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
@@ -96,11 +110,16 @@ function App() {
 
     return ( 
     <>
-        <Header />
-        <div className="flex h-[calc(100vh-5rem)]">
-            <div id="container-left" className="flex flex-col flex-1">
+        {/*<Header title={title}/>*/}
+        <div className="flex h-[calc(100vh)]">
+            <div id="container-left" className="flex flex-col">
                 <LeftPanel
+                    title={title}
+                    difficulty={difficulty}
+                    tags={tags}
                     problemStatement={problemStatement}
+                    description={description}
+                    milestones={milestones}
                     goal={goal}
                     userCodeT0={userCodeT0}
                     userCodeT1={userCodeT1}
@@ -109,7 +128,7 @@ function App() {
                     handleAgentCodeChange={commitAgentCode}
                 />
             </div>
-            <div className="flex flex-2 flex-col">
+            <div className="flex flex-1 flex-col">
                 <User start_code={userCodeT1} code={liveUserCode} setCode={setLiveUserCode} onCommit={commitUserCode} />
                 <User start_code={agentCodeT1} code={liveAgentCode} setCode={setLiveAgentCode} onCommit={commitAgentCode} />
             </div>

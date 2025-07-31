@@ -54,8 +54,8 @@ function User({
   }
 
   return (
-    <div className="flex flex-1 border-1">
-      <div className="flex flex-col flex-3">
+    <div className="flex flex-1 border-1 min-w-0">
+      <div className="flex flex-col flex-3 min-w-0">
         <div className="flex flex-1 items-center justify-between px-10 py-1">
           <div className="text-sm font-semibold text-gray-700">Main.py</div>
           <button

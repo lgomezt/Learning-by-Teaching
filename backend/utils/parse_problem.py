@@ -8,12 +8,18 @@ from fastapi import UploadFile
 
 PROBLEMS_DIR = "problems"
 
+import frontmatter
+import re
+
+import frontmatter
+import re
 
 def parse_problem_content(content: str, metadata: dict = None):
     """
-    Shared logic for parsing markdown content with frontmatter + problem structure.
+    Enhanced parser for markdown content with frontmatter + structured problem sections.
     """
-    # If frontmatter wasn't extracted before (e.g. from UploadFile), extract it now
+
+    # Extract frontmatter metadata if not provided
     if metadata is None:
         post = frontmatter.loads(content)
         metadata = post.metadata
@@ -23,8 +29,22 @@ def parse_problem_content(content: str, metadata: dict = None):
     match = re.search(r"(# Problem Statement.*?)^## Evaluation", content, re.DOTALL | re.MULTILINE)
     problem_statement = match.group(1).strip() if match else ""
 
+    # Extract Description Block under ## Description
+    description_match = re.search(r"## Description\s+([\s\S]*?)(^## |\Z)", content, re.MULTILINE)
+    description_block = description_match.group(1).strip() if description_match else ""
+
+    # Extract all Milestones
+    milestones = []
+    milestone_pattern = re.compile(
+        r"\*\*Milestone (\d+)\*\*([\s\S]*?)(?=\*\*Milestone|\n##|\Z)", re.MULTILINE
+    )
+    for milestone_match in milestone_pattern.finditer(content):
+        milestone_number = milestone_match.group(1)
+        milestone_content = milestone_match.group(2).strip()
+        milestones.append({ "number": int(milestone_number), "content": milestone_content })
+
     # Extract Example Output block
-    match = re.search(r"\*\*Example output:\*\*\s*```(?:\w+)?\s*([\s\S]*?)```", content)
+    match = re.search(r"^## Example output:?\s*```(?:\w+)?\s*([\s\S]*?)```", content, re.MULTILINE)
     example_output = match.group(1).strip() if match else ""
 
     # Extract user input block
@@ -37,11 +57,13 @@ def parse_problem_content(content: str, metadata: dict = None):
 
     return {
         "title": metadata.get("title", ""),
-        "description": metadata.get("description", ""),
+        "description_meta": metadata.get("description", ""),
         "difficulty": metadata.get("difficulty", ""),
         "tags": metadata.get("tags", []),
         "author": metadata.get("author", ""),
         "problem_statement": problem_statement,
+        "description_block": description_block,
+        "milestones": milestones,
         "example_output": example_output,
         "agent_code": agent_code,
         "user_code": user_code,
