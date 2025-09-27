@@ -25,4 +25,4 @@ dist-ssr
 *.sw?
 
 # Cache
-__pycache__
+*/__pycache__
