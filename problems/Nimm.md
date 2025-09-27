@@ -72,6 +72,39 @@ Game over
 
 ## Evaluation
 
+## Lesson Goals
+
+- initialize and update a state variable (stone count),
+- use a while loop with a clear termination condition, 
+- read and convert user input with input() and int(), 
+- perform arithmetic updates to mutate program state, 
+- print state each iteration for user feedback, 
+- trigger a post-loop action when the end condition is met ('Game over'), 
+- practice reasoning about loop invariants and preventing infinite loops
+
+## Common Mistakes
+
+- forgetting to initialize the stone count variable, 
+- using assignment (=) instead of comparison (==) in loop condition, 
+- loop condition written incorrectly (e.g., while stones > 0 vs while stones >= 0), 
+- not updating the stone count inside the loop, 
+- subtracting stones before checking input validity, 
+- input not converted to int (leads to string concatenation instead of arithmetic), 
+- using input() without casting and trying to subtract a string from an integer, 
+- placing print statements outside of the loop so they only run once, 
+- off-by-one error in ending condition (ending too early or too late), 
+- forgetting to decrement the pile when stones = 1 or 2, 
+- not handling negative stone counts if user enters a big number, 
+- infinite loop caused by never reaching zero, 
+- forgetting to break out of the loop when stones = 0, 
+- bad indentation causing code not to run inside the loop, 
+- using == instead of > or >= in loop condition, causing game to skip iterations, 
+- forgetting parentheses in print(), e.g., print ‘Game over’, 
+- using == for assignment in Python (syntax error), 
+- forgetting to add spacing print() leading to unreadable output, 
+- not resetting or reusing variable names consistently, 
+- ignoring edge cases like removing 0 stones or too many stones
+
 ## Suggested Answer
 ```python
 # Start with 20 stones
@@ -88,8 +121,6 @@ while stones > 0:
 print("Game over")
 ```
 
-## System Prompt
-
 ---
 # Interface
 
@@ -102,6 +133,6 @@ print("Game over")
 ## Agent Input
 ```python
 # Start with 20 stones
-stones = 20
+stones == 20
 
 ```

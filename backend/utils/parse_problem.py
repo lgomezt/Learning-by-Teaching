@@ -8,12 +8,6 @@ from fastapi import UploadFile
 
 PROBLEMS_DIR = "problems"
 
-import frontmatter
-import re
-
-import frontmatter
-import re
-
 def parse_problem_content(content: str, metadata: dict = None):
     """
     Enhanced parser for markdown content with frontmatter + structured problem sections.
@@ -28,6 +22,16 @@ def parse_problem_content(content: str, metadata: dict = None):
     # Extract Problem Statement
     match = re.search(r"(# Problem Statement.*?)^## Evaluation", content, re.DOTALL | re.MULTILINE)
     problem_statement = match.group(1).strip() if match else ""
+
+    # Extract Lesson Goals
+    match = re.search(r"## Lesson Goals(.*?)^## Common Mistakes", content, re.DOTALL | re.MULTILINE)
+    lesson_goals = match.group(1).strip() if match else ""
+    lesson_goals = lesson_goals.replace("- ", "").replace(", \n", ",\n").split(",\n", maxsplit = -1)
+
+    # Extract Common Mistakes
+    match = re.search(r"## Common Mistakes(.*?)^## Suggested Answer", content, re.DOTALL | re.MULTILINE)
+    common_mistakes = match.group(1).strip() if match else ""
+    common_mistakes = common_mistakes.replace("- ", "").replace(", \n", ",\n").split(",\n", maxsplit = -1)
 
     # Extract Description Block under ## Description
     description_match = re.search(r"## Description\s+([\s\S]*?)(^## |\Z)", content, re.MULTILINE)
@@ -62,6 +66,8 @@ def parse_problem_content(content: str, metadata: dict = None):
         "tags": metadata.get("tags", []),
         "author": metadata.get("author", ""),
         "problem_statement": problem_statement,
+        "lesson_goals": lesson_goals,
+        "common_mistakes": common_mistakes,
         "description_block": description_block,
         "milestones": milestones,
         "example_output": example_output,
