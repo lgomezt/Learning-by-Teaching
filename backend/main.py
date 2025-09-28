@@ -20,7 +20,6 @@ load_dotenv()
 
 client_openai = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 client_gemini = genai.Client(api_key = os.environ.get("GEMINI_API_KEY"))
-
 agent = Agent(openai_client = client_openai)
 
 # Allow frontend to call backend
@@ -53,66 +52,63 @@ async def chat_endpoint(request: Request):
         data = await request.json()
     except Exception:
         return JSONResponse(status_code=400, content={"error": "Invalid JSON"})
-
-    messages = data.get("messages")
-    if not messages or not isinstance(messages, list):
-        return JSONResponse(status_code=400, content={"error": "Messages must be an array"})
-
-    if messages[-1].get("role") != "user":
-        return JSONResponse(status_code=400, content={"error": "Last message must be from user"})
+    
+    # Receive the full history from the client
+    conversation_history = data.get("conversation_history")
+    if conversation_history is None or not isinstance(conversation_history, list):
+        return JSONResponse(status_code=400, content={"error": "A 'conversation_history' array is required."})
 
     problem_statement = data.get("problem_statement", "")
     lesson_goals = data.get("lesson_goals", "")
     common_mistakes = data.get("common_mistakes", "")
 
-    user_code_t0 = data.get("user_code_t0", "")
-    user_code_t1 = data.get("user_code_t1", "")
-    
-    agent_code_t0 = data.get("agent_code_t0", "")
-    agent_code_t1 = data.get("agent_code_t1", "")
-    
-    user_message = messages[-1]["content"]
-    chat_history = messages[:-1]
-
     try:
+        # TODO: Router agent which decide if the agent needs to code or just answer.
+        
+        # Gemini Agents
         agent_code = get_agent_code(client_gemini, 
                                     problem_statement, 
                                     lesson_goals, 
                                     common_mistakes,
-                                    conversation_history = [],
+                                    conversation_history,
                                     notebook_content = "",
                                     history_limit = 15,
                                     model_name = "gemini-2.5-pro",
                                     thinking_budget = -1,
                                     temperature = 0.2)
         
+        # Include the new code in the history to create an appropriate message
+        agent_code_dict = {"author": "agent", "type": "code", "content": agent_code}
+        conversation_history.append(agent_code_dict)
+
         agent_response = get_agent_response(client_gemini,
                                             problem_statement,
                                             lesson_goals,
                                             common_mistakes,
-                                            conversation_history = [],
+                                            conversation_history,
                                             notebook_content = "",
                                             model_name = "gemini-2.5-pro",
                                             thinking_budget = -1,
                                             temperature = 0.7)
 
-
-        assistant_response = agent.agent_respond(
-            user_message=user_message,
-            chat_history=chat_history,
-            user_code_t0=user_code_t0,
-            user_code_t1=user_code_t1,
-            agent_code_t0=agent_code_t0,
-            agent_code_t1=agent_code_t1,
-            problem_statement=problem_statement,
-            model="gpt-4.1-mini", # A cheap model for testing purposes
-        )
+        # OpenAI Agent
+        # assistant_response = agent.agent_respond(
+        #     user_message=user_message,
+        #     chat_history=chat_history,
+        #     user_code_t0=user_code_t0,
+        #     user_code_t1=user_code_t1,
+        #     agent_code_t0=agent_code_t0,
+        #     agent_code_t1=agent_code_t1,
+        #     problem_statement=problem_statement,
+        #     model="gpt-4.1-mini", # A cheap model for testing purposes
+        # )
 
         return {
-            "role": "assistant",
-            "content": assistant_response["content"],
-            **({"updated_code": assistant_response["updated_code"]} if assistant_response["updated_code"] else {})
+            "author": "agent",
+            "content": agent_response.text,
+            **({"updated_code": agent_code} if agent_code else {})
         }
+        
     except Exception as e:
         print("Agent error:", e)
         return JSONResponse(status_code=500, content={"error": "Agent processing failed"})

@@ -2,6 +2,7 @@
 from google import genai
 from google.genai import types
 from typing import List, Dict, Any
+import re
 
 def create_code_system_prompt(
     problem_description: str,
@@ -122,6 +123,30 @@ def create_code_turn_prompt(
     
     return user_prompt
 
+def extract_python_code(text: str) -> str:
+    """
+    Checks for a ```python ... ``` markdown block and extracts the code.
+    
+    Args:
+        text: The string which may contain a python markdown block.
+
+    Returns:
+        The extracted code if the block is found, otherwise the original text.
+    """
+    # The pattern looks for ```python, followed by any characters (including newlines),
+    # and ending with ```. The re.DOTALL flag allows '.' to match newlines.
+    # The content between the fences is captured in a group.
+    pattern = r"```python\s*(.*?)\s*```"
+    
+    match = re.search(pattern, text, re.DOTALL)
+    
+    if match:
+        # If a match is found, return the first captured group (the code inside).
+        return match.group(1).strip()
+    else:
+        # If no markdown block is found, return the original text.
+        return text
+
 def get_agent_code(
     client,
     problem_description: str,
@@ -191,8 +216,10 @@ def get_agent_code(
         contents = contents,
         config = generate_content_config
     )
+
+    clean_code = extract_python_code(response.text)
     
-    return response
+    return clean_code
 
 def create_chat_system_prompt(
     problem_description: str,

@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 
+// what a single event in our conversation history looks like.
+type HistoryEvent = {
+  author: 'user' | 'agent';
+  type: 'chat' | 'code';
+  content: string;
+};
+
 type ChatbotProps = {
-  messages: ({ role: string; content: string }[]);
-  setMessages: React.Dispatch<React.SetStateAction<{ role: string; content: string }[]>>
+  messages: HistoryEvent[];
+  setMessages: React.Dispatch<React.SetStateAction<HistoryEvent[]>>;
   problemStatement: string;
   userCodeT0: string;
   userCodeT1: string;
@@ -38,22 +45,35 @@ function Chatbot({
     async function sendMessage() {
         if (!input.trim()) return;
 
-        // Add user message to messages state
-        const updatedMessages = [...messages, { role: "user", content: input }];
+        // Construct the user's turn in the conversation history
+        const userChatEvent: HistoryEvent = { 
+            author: 'user', 
+            type: 'chat', 
+            content: input 
+        };
+
+        // Create the complete, updated history that we will use for BOTH the API call and for setting the new state.
+        const updatedMessages = [...messages, userChatEvent];
+
+        // We update the UI with the user's message immediately.
         setMessages(updatedMessages);
         setInput("");
+
+        // Build the full `conversationHistory` payload for the backend.
+        const conversationHistory: HistoryEvent[] = [
+            ...messages, // All previous events
+            { author: 'agent', type: 'code', content: agentCodeT1 }, // Agent's last code
+            userChatEvent, // The new user message we just created
+            { author: 'user', type: 'code', content: userCodeT1 }, // User's current code
+        ];
 
         try {
             const res = await fetch("http://localhost:8000/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    messages: updatedMessages,
+                    conversation_history: conversationHistory,
                     problem_statement: problemStatement,
-                    user_code_t0: userCodeT0,
-                    user_code_t1: userCodeT1,
-                    agent_code_t0: agentCodeT0,
-                    agent_code_t1: agentCodeT1,
                     lesson_goals: lessonGoals,
                     common_mistakes: commonMistakes
                 }),
@@ -65,16 +85,44 @@ function Chatbot({
 
             const data = await res.json();
 
-            // Update agent code if backend returned new or modified code
+            // Create new HistoryEvent objects from the agent's response.
+            // The agent's turn consists of a chat message and potentially new code.
+            const newEvents: HistoryEvent[] = [];
+
+            // Add the agent's chat response.
+            newEvents.push({
+                author: 'agent',
+                type: 'chat',
+                content: data.content,
+            });
+
+            // If the agent provided new code, update the parent component's state
+            // and also add a 'code' event to our history.
             if (data.updated_code) {
                 onAgentCodeUpdate(data.updated_code);
+                newEvents.push({
+                    author: 'agent',
+                    type: 'code',
+                    content: data.updated_code,
+                });
             }
 
-            // Append assistant's response message
-            setMessages(prev => [...prev, { role: "assistant", content: data.content }]);
+            // Update the history state with the agent's complete turn.
+            // setMessages(prev => [...prev, { role: "assistant", content: data.content }]);
+            setMessages(prevMessages => [...prevMessages, ...newEvents]);
+
         } catch (err) {
             console.error(err);
-            setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong..." }]);
+            // setMessages(prev => [...prev, { role: "assistant", content: "Something went wrong..." }]);
+
+            // If something goes wrong, add an error message to the chat.
+            const errorEvent: HistoryEvent = { 
+                author: 'agent', 
+                type: 'chat', 
+                content: "Sorry, something went wrong..." 
+            };
+            
+            setMessages(prevMessages => [...prevMessages, errorEvent]);
         }
     }
         
@@ -98,6 +146,7 @@ function Chatbot({
                 {/* Chat Window */}
                 <div className={`flex-1 ${messages.length > 0 ? 'overflow-y-auto' : ''} p-4 space-y-4`}>
                     {messages.length === 0 ? (
+                        /* Welcome message */
                         <div className="flex flex-col h-full items-center justify-center text-center text-slate-400">
                             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mb-4">
                                 <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -108,16 +157,18 @@ function Chatbot({
                             <p className="text-sm max-w-sm">Ask me anything about your code, get suggestions, or discuss the problem approach.</p>
                         </div>
                     ) : (
-                        messages.map((msg, index) => (
-                            <div key={index} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                                <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
-                                    msg.role === "user" 
-                                        ? "bg-emerald-500 text-white rounded-br-md" 
-                                        : "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-md"
-                                } overflow-auto whitespace-pre-wrap break-words`}>
-                                    {msg.content}
+                        messages
+                            .filter(msg => msg.type === 'chat')
+                            .map((msg, index) => (
+                                <div key={index} className={`flex ${msg.author === "user" ? "justify-end" : "justify-start"}`}>
+                                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-sm ${
+                                        msg.author === "user" 
+                                            ? "bg-emerald-500 text-white rounded-br-md" 
+                                            : "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-md"
+                                    } overflow-auto whitespace-pre-wrap break-words`}>
+                                        {msg.content}
+                                    </div>
                                 </div>
-                            </div>
                         ))
                     )}
                     <div ref={scrollRef}/>
