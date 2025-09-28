@@ -15,6 +15,8 @@ type LeftPanelProps = {
   agentCodeT0: string;
   agentCodeT1: string;
   handleAgentCodeChange: (newCode: string) => void;
+  lessonGoals: string[];
+  commonMistakes: string[];
 };
 
 function LeftPanel({
@@ -30,6 +32,8 @@ function LeftPanel({
         agentCodeT0,
         agentCodeT1,
         handleAgentCodeChange,
+        lessonGoals,
+        commonMistakes,
     }: LeftPanelProps) {
 
     const [activeTab, setActiveTab] = useState<"description" | "goal" | "chatbot">("description");
@@ -227,6 +231,8 @@ function LeftPanel({
                                     agentCodeT0={agentCodeT0}
                                     agentCodeT1={agentCodeT1}
                                     onAgentCodeUpdate={handleAgentCodeChange}
+                                    lessonGoals={lessonGoals}
+                                    commonMistakes={commonMistakes}
                                 />
                             </div>
                         )}

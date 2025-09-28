@@ -9,6 +9,8 @@ type ChatbotProps = {
   agentCodeT0: string;
   agentCodeT1: string;
   onAgentCodeUpdate: (newCode: string) => void;
+  lessonGoals: string[];
+  commonMistakes: string[];
 };
 
 function Chatbot({
@@ -20,6 +22,8 @@ function Chatbot({
     agentCodeT0,
     agentCodeT1,
     onAgentCodeUpdate,
+    lessonGoals,
+    commonMistakes,
 }: ChatbotProps) {
 
     const [input, setInput] = useState("");
@@ -50,6 +54,8 @@ function Chatbot({
                     user_code_t1: userCodeT1,
                     agent_code_t0: agentCodeT0,
                     agent_code_t1: agentCodeT1,
+                    lesson_goals: lessonGoals,
+                    common_mistakes: commonMistakes
                 }),
             });
 

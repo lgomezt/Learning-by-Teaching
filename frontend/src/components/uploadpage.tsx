@@ -12,7 +12,6 @@ export default function UploadPage({ autoscroll }: UploadPageProps) {
 
   const handleFileUpload = (f: File) => {
     if (f && f.name.endsWith(".md")) {
-      console.log(f.name);
       setFiles([...files, f]);
     }
   };

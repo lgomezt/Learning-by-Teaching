@@ -2,10 +2,14 @@ from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
-from openai import OpenAI
+
 from dotenv import load_dotenv
-from utils.agent_tools.base_agent import Agent
 from utils.parse_problem import load_problem_from_file
+
+from openai import OpenAI
+from utils.agent_tools.openai_agent import Agent
+from utils.agent_tools.gemini_agent import get_agent_code, get_agent_response
+from google import genai
 
 # Importing utility functions
 from utils.parse_problem import load_problem, list_all_problems
@@ -14,9 +18,10 @@ app = FastAPI()
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client_openai = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
+client_gemini = genai.Client(api_key = os.environ.get("GEMINI_API_KEY"))
 
-agent = Agent(openai_client=client)
+agent = Agent(openai_client = client_openai)
 
 # Allow frontend to call backend
 app.add_middleware(
@@ -57,9 +62,12 @@ async def chat_endpoint(request: Request):
         return JSONResponse(status_code=400, content={"error": "Last message must be from user"})
 
     problem_statement = data.get("problem_statement", "")
+    lesson_goals = data.get("lesson_goals", "")
+    common_mistakes = data.get("common_mistakes", "")
 
     user_code_t0 = data.get("user_code_t0", "")
     user_code_t1 = data.get("user_code_t1", "")
+    
     agent_code_t0 = data.get("agent_code_t0", "")
     agent_code_t1 = data.get("agent_code_t1", "")
     
@@ -67,6 +75,28 @@ async def chat_endpoint(request: Request):
     chat_history = messages[:-1]
 
     try:
+        agent_code = get_agent_code(client_gemini, 
+                                    problem_statement, 
+                                    lesson_goals, 
+                                    common_mistakes,
+                                    conversation_history = [],
+                                    notebook_content = "",
+                                    history_limit = 15,
+                                    model_name = "gemini-2.5-pro",
+                                    thinking_budget = -1,
+                                    temperature = 0.2)
+        
+        agent_response = get_agent_response(client_gemini,
+                                            problem_statement,
+                                            lesson_goals,
+                                            common_mistakes,
+                                            conversation_history = [],
+                                            notebook_content = "",
+                                            model_name = "gemini-2.5-pro",
+                                            thinking_budget = -1,
+                                            temperature = 0.7)
+
+
         assistant_response = agent.agent_respond(
             user_message=user_message,
             chat_history=chat_history,

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 
 type SerializedFile = {
   name: string;
@@ -18,7 +19,7 @@ type FileContextType = {
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Encoding for saving to localstorage
+// Encoding for saving to sessionStorage
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Convert File to base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -48,7 +49,7 @@ const base64ToFile = (serializedFile: SerializedFile): File => {
   });
 };
 
-// Serialize files to localStorage
+// Serialize files to sessionStorage
 const serializeFiles = async (files: File[]): Promise<void> => {
   try {
     const serializedFiles: SerializedFile[] = [];
@@ -64,16 +65,16 @@ const serializeFiles = async (files: File[]): Promise<void> => {
       });
     }
     
-    localStorage.setItem('persistedFiles', JSON.stringify(serializedFiles));
+    sessionStorage.setItem('persistedFiles', JSON.stringify(serializedFiles));
   } catch (error) {
     console.error('Error serializing files:', error);
   }
 };
 
-// Deserialize files from localStorage
+// Deserialize files from sessionStorage
 const deserializeFiles = (): File[] => {
   try {
-    const serializedData = localStorage.getItem('persistedFiles');
+    const serializedData = sessionStorage.getItem('persistedFiles');
     if (!serializedData) return [];
     
     const serializedFiles: SerializedFile[] = JSON.parse(serializedData);
@@ -85,38 +86,50 @@ const deserializeFiles = (): File[] => {
 };
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-export function FileProvider({ children }: { children: ReactNode }) {
+export default function FileProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState<File[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const location = useLocation();
 
-  // Load files from localStorage on mount
+  const shouldResetOnLanding = import.meta.env.DEV;
+
+  // Load files from sessionStorage on mount
   useEffect(() => {
+    // Clear any persisted uploads when we hit the landing page so a refresh starts clean during dev.
+    if (shouldResetOnLanding && location.pathname === "/") {
+      sessionStorage.removeItem('persistedFiles');
+      sessionStorage.removeItem('selectedFileIndex');
+      setFiles([]);
+      setSelectedFile(null);
+      return;
+    }
+
     const restoredFiles = deserializeFiles();
     if (restoredFiles.length > 0) {
       setFiles(restoredFiles);
-      
+
       // Restore selected file
-      const selectedIndex = localStorage.getItem('selectedFileIndex');
+      const selectedIndex = sessionStorage.getItem('selectedFileIndex');
       if (selectedIndex && parseInt(selectedIndex) < restoredFiles.length) {
         setSelectedFile(restoredFiles[parseInt(selectedIndex)]);
       }
     }
-  }, []);
+  }, [location.pathname, shouldResetOnLanding]);
 
-  // used for localStorage for setFiles
+  // used for sessionStorage for setFiles
   const persistentSetFiles = async (newFiles: File[]) => {
     setFiles(newFiles);
     await serializeFiles(newFiles);
   };
 
-  // used for localStorage for setSelectedFile
+  // used for sessionStorage for setSelectedFile
   const persistentSetSelectedFile = (file: File | null) => {
     setSelectedFile(file);
     
     if (file) { const index = files.findIndex(f => f.name === file.name && f.lastModified === file.lastModified && f.size === file.size);
-      localStorage.setItem('selectedFileIndex', index.toString());
+      sessionStorage.setItem('selectedFileIndex', index.toString());
     } else {
-      localStorage.removeItem('selectedFileIndex');
+      sessionStorage.removeItem('selectedFileIndex');
     }
   };
 

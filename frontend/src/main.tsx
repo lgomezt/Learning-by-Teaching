@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import App from "./App.tsx";
 import LandingPage from "./components/landingpage.tsx";
-import { FileProvider } from "../context/filecontext.tsx"; // ✅ Import
+import FileProvider from "../context/filecontext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

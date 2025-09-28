@@ -27,6 +27,9 @@ function App() {
     const [userOutput, setUserOutput] = useState<string>("");
     const [agentOutput, setAgentOutput] = useState<string>("");
 
+    const [lessonGoals, setLessonGoals] = useState([]);
+    const [commonMistakes, setCommonMistakes] = useState([]);
+
     // Live-in-editor code states.
     // These store what the user or agent is *currently typing or editing* in real-time.
     // They update on every keystroke but do NOT count as meaningful code revisions
@@ -67,10 +70,10 @@ function App() {
         if (newCode) {
             setLiveAgentCode(newCode);
         }
-        console.log("newCode:", newCode)
         handleCodeChange(codeToCommit, agentCodeT1, setAgentCodeT0, setAgentCodeT1);
     }
 
+    // Executed when the user press Load Lesson 1 button
     useEffect(() => {
         async function loadProblem() {
             if (selectedFile != null) {
@@ -90,7 +93,7 @@ function App() {
                 setUserCodeT1(userInit);
 
                 setDifficulty(problem.difficulty || "");
-                console.log(difficulty)
+                
                 setTags(problem.tags || []);
 
                 // Retrieve the problem statement
@@ -100,8 +103,8 @@ function App() {
                 setMilestones(problem.milestones || []);
                 setGoal(problem.example_output || "");
 
-                // Retrieve the system prompt for the behavior of the agent
-                const systemPrompt = problem.system_prompt || ""; // Currently is empty and not used
+                setCommonMistakes(problem.common_mistakes || []);
+                setLessonGoals(problem.lesson_goals || []);
             }
         }
         
@@ -126,6 +129,8 @@ function App() {
                     agentCodeT0={agentCodeT0}
                     agentCodeT1={agentCodeT1}
                     handleAgentCodeChange={commitAgentCode}
+                    lessonGoals={lessonGoals}
+                    commonMistakes={commonMistakes}
                 />
             </div>
             <div className="flex flex-1 flex-col">
