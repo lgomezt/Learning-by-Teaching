@@ -124,9 +124,7 @@ function App() {
                     description={description}
                     milestones={milestones}
                     goal={goal}
-                    userCodeT0={userCodeT0}
                     userCodeT1={userCodeT1}
-                    agentCodeT0={agentCodeT0}
                     agentCodeT1={agentCodeT1}
                     handleAgentCodeChange={commitAgentCode}
                     lessonGoals={lessonGoals}

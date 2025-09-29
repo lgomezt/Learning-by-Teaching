@@ -1,7 +1,8 @@
+// chatbot.tsx
 import { useState, useEffect, useRef } from "react";
 
 // what a single event in our conversation history looks like.
-type HistoryEvent = {
+export type HistoryEvent = {
   author: 'user' | 'agent';
   type: 'chat' | 'code';
   content: string;
@@ -11,9 +12,7 @@ type ChatbotProps = {
   messages: HistoryEvent[];
   setMessages: React.Dispatch<React.SetStateAction<HistoryEvent[]>>;
   problemStatement: string;
-  userCodeT0: string;
   userCodeT1: string;
-  agentCodeT0: string;
   agentCodeT1: string;
   onAgentCodeUpdate: (newCode: string) => void;
   lessonGoals: string[];
@@ -24,9 +23,7 @@ function Chatbot({
     messages,
     setMessages,
     problemStatement, 
-    userCodeT0,
     userCodeT1,
-    agentCodeT0,
     agentCodeT1,
     onAgentCodeUpdate,
     lessonGoals,

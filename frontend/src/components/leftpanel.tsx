@@ -1,6 +1,8 @@
+// leftpanel.tsx
 import { useState } from "react";
 import Chatbot from "./chatbot";
 import Goal from "./goal";
+import { type HistoryEvent } from "./chatbot"
 
 type LeftPanelProps = {
   title: string;
@@ -10,9 +12,7 @@ type LeftPanelProps = {
   description: string;
   milestones: { number: number; content: string }[];
   goal: string;
-  userCodeT0: string;
   userCodeT1: string;
-  agentCodeT0: string;
   agentCodeT1: string;
   handleAgentCodeChange: (newCode: string) => void;
   lessonGoals: string[];
@@ -27,9 +27,7 @@ function LeftPanel({
         description,
         milestones,
         goal,
-        userCodeT0,
         userCodeT1,
-        agentCodeT0,
         agentCodeT1,
         handleAgentCodeChange,
         lessonGoals,
@@ -38,7 +36,7 @@ function LeftPanel({
 
     const [activeTab, setActiveTab] = useState<"description" | "goal" | "chatbot">("description");
     const [isPanelCollapsed, setIsPanelCollapsed] = useState<boolean>(false);
-    const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+    const [messages, setMessages] = useState<HistoryEvent[]>([]);
     const [expandedMilestones, setExpandedMilestones] = useState<Set<number>>(new Set());
 
     const togglePanel = () => {
@@ -226,9 +224,7 @@ function LeftPanel({
                                     messages={messages}
                                     setMessages={setMessages}
                                     problemStatement={problemStatement}
-                                    userCodeT0={userCodeT0}
                                     userCodeT1={userCodeT1}
-                                    agentCodeT0={agentCodeT0}
                                     agentCodeT1={agentCodeT1}
                                     onAgentCodeUpdate={handleAgentCodeChange}
                                     lessonGoals={lessonGoals}
