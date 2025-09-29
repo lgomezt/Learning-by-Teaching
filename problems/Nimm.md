@@ -22,12 +22,10 @@ update_log:
 1. The game starts with a pile of 20 stones between the players
 2. The two players alternate turns
 3. On a given turn, a player may take either 1 or 2 stones from the center pile
+4. The two players continue until the center pile has run out of stones.
+5. The last player to take a stone loses.
 
-The two players continue until the center pile has run out of stones.
-
-The last player to take a stone loses.
-
-> We have broken the problem down into three smaller milestones so you can build the solution step by step. 
+**We have broken the problem down into three smaller milestones so you can build the solution step by step.** 
 
 ## Task
 
@@ -39,22 +37,21 @@ You’ll write a `loop` to remove stones from a pile.
 
 **Milestone 2**
 2. **Repeat this process until there are zero stones left:**
-    - Print how many stones are left.  
-      _Example:_ `There are 20 stones left`
-    - Ask the user how many stones to remove — using this code:  
-      ```python
-      int(input("Would you like to remove 1 or 2 stones? "))
-      ```
-    - Subtract that number of stones from the total.
-    - Add an empty `print()` between turns (to make the output easier to read).
+  - Print how many stones are left.  
+    _Example:_ `There are 20 stones left`
+  - Ask the user how many stones to remove using this code:  
+    ```python
+    int(input("Would you like to remove 1 or 2 stones?"))
+    ```
+  - Subtract that number of stones from the total.
+
+  **Important:**  
+  - For now, don’t worry about whose turn it is.  
+  - Don’t worry about making sure the user enters only 1 or 2 stones. any number is fine in this step.
 
 **Milestone 3**
 1. **End the game when there are no stones left.**  
-   _Print:_ `Game over`
-
-**Important:**  
-- For now, don’t worry about whose turn it is.  
-- Don’t worry about making sure the user enters only 1 or 2 stones — any number is fine in this step.
+  _Print:_ `Game over`
 
 ## Example output: 
 ```

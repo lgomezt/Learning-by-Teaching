@@ -15,7 +15,7 @@ function Goal({ text }: GoalProps) {
       </div>
       
       <p className="text-sm text-slate-300 mb-4 leading-relaxed">
-        Complete this lesson by achieving the output below:
+        Finish this lesson by creating an output like the one shown below.
       </p>
       
       {/* Output Area */}

@@ -5,6 +5,9 @@ import "./index.css";
 import App from "./App.tsx";
 import LandingPage from "./components/landingpage.tsx";
 import FileProvider from "../context/filecontext.tsx";
+import Prism from 'prismjs';
+// import 'prismjs/themes/prism-okaidia.css';
+import 'prism-themes/themes/prism-nord.css';
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

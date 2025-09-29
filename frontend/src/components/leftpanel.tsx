@@ -3,6 +3,9 @@ import { useState } from "react";
 import Chatbot from "./chatbot";
 import Goal from "./goal";
 import { type HistoryEvent } from "./chatbot"
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypePrism from 'rehype-prism-plus'
 
 type LeftPanelProps = {
   title: string;
@@ -170,10 +173,24 @@ function LeftPanel({
                                 <div className="flex-1 overflow-y-auto">
                                     {/* Description Tab Content*/}
                                     <div className="p-4">
-                                        <div className="text-slate-100 leading-relaxed">
-                                            <div className="whitespace-pre-wrap">
+                                        {/* prose: to activate @tailwindcss/typography plugin */}
+                                        {/* prose-invert: flips the color scheme to be light text on a dark background */}
+                                         <div className="
+                                            prose prose-invert text-slate-100 leading-relaxed
+                                            
+                                            /* --- Styles for INLINE code `like this` --- */
+                                            prose-code:text-emerald-400 prose-code:p-1 prose-code:rounded-md 
+                                            prose-code:before:content-none prose-code:after:content-none
+
+                                            /* --- Styles for the CODE BLOCK container --- */
+                                            prose-pre:bg-slate-800 prose-pre:rounded-lg prose-pre:shadow-lg
+                                            ">
+                                                <ReactMarkdown 
+                                                    remarkPlugins={[remarkGfm]}
+                                                    rehypePlugins={[rehypePrism]}
+                                                >
                                                 {description}
-                                            </div>
+                                            </ReactMarkdown>
                                         </div>
                                     </div> {milestones && milestones.length > 0 && (
                                         <div className="p-4">
@@ -197,8 +214,22 @@ function LeftPanel({
                                                         {expandedMilestones.has(index) && (
                                                             <div className="px-4 py-3 border-t border-slate-700 bg-slate-900">
                                                                 <div className="text-slate-100 leading-relaxed">
-                                                                    <div className="whitespace-pre-wrap">
-                                                                        {milestone.content}
+                                                                    <div className="
+                                                                    prose prose-invert text-slate-100 leading-relaxed
+                                                                    
+                                                                    /* --- Styles for INLINE code `like this` --- */
+                                                                    prose-code:text-emerald-400 prose-code:p-1 prose-code:rounded-md 
+                                                                    prose-code:before:content-none prose-code:after:content-none
+
+                                                                    /* --- Styles for the CODE BLOCK container --- */
+                                                                    prose-pre:bg-slate-800 prose-pre:rounded-lg prose-pre:shadow-lg                                                                    
+                                                                    ">
+                                                                        <ReactMarkdown 
+                                                                            remarkPlugins={[remarkGfm]}
+                                                                            rehypePlugins={[rehypePrism]}
+                                                                        >
+                                                                            {milestone.content}
+                                                                        </ReactMarkdown>
                                                                     </div>
                                                                 </div>
                                                             </div>
