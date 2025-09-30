@@ -74,13 +74,14 @@ async def chat_endpoint(request: Request):
                                     notebook_content = "",
                                     history_limit = 15,
                                     model_name = "gemini-2.5-pro",
-                                    thinking_budget = -1,
+                                    thinking_budget = 128, # -1
                                     temperature = 0.2)
         
         # Include the new code in the history to create an appropriate message
         agent_code_dict = {"author": "agent", "type": "code", "content": agent_code}
         conversation_history.append(agent_code_dict)
 
+        # TODO: FIX CHAT IMPLEMENTATION!
         agent_response = get_agent_response(client_gemini,
                                             problem_statement,
                                             lesson_goals,
@@ -88,7 +89,7 @@ async def chat_endpoint(request: Request):
                                             conversation_history,
                                             notebook_content = "",
                                             model_name = "gemini-2.5-pro",
-                                            thinking_budget = -1,
+                                            thinking_budget = 128, # -1
                                             temperature = 0.7)
 
         # OpenAI Agent

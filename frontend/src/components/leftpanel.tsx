@@ -20,26 +20,23 @@ type LeftPanelProps = {
   handleAgentCodeChange: (newCode: string) => void;
   lessonGoals: string[];
   commonMistakes: string[];
+  conversationHistory: HistoryEvent[];
+  onSendMessage: (input: string) => Promise<void>;
 };
 
 function LeftPanel({
         title,
         difficulty,
         tags,
-        problemStatement,
         description,
         milestones,
         goal,
-        userCodeT1,
-        agentCodeT1,
-        handleAgentCodeChange,
-        lessonGoals,
-        commonMistakes,
+        conversationHistory,
+        onSendMessage,
     }: LeftPanelProps) {
 
     const [activeTab, setActiveTab] = useState<"description" | "goal" | "chatbot">("description");
     const [isPanelCollapsed, setIsPanelCollapsed] = useState<boolean>(false);
-    const [messages, setMessages] = useState<HistoryEvent[]>([]);
     const [expandedMilestones, setExpandedMilestones] = useState<Set<number>>(new Set());
 
     const togglePanel = () => {
@@ -177,12 +174,10 @@ function LeftPanel({
                                         {/* prose-invert: flips the color scheme to be light text on a dark background */}
                                          <div className="
                                             prose prose-invert text-slate-100 leading-relaxed
-                                            
-                                            /* --- Styles for INLINE code `like this` --- */
+                                        
                                             prose-code:text-emerald-400 prose-code:p-1 prose-code:rounded-md 
                                             prose-code:before:content-none prose-code:after:content-none
 
-                                            /* --- Styles for the CODE BLOCK container --- */
                                             prose-pre:bg-slate-800 prose-pre:rounded-lg prose-pre:shadow-lg
                                             ">
                                                 <ReactMarkdown 
@@ -217,11 +212,9 @@ function LeftPanel({
                                                                     <div className="
                                                                     prose prose-invert text-slate-100 leading-relaxed
                                                                     
-                                                                    /* --- Styles for INLINE code `like this` --- */
                                                                     prose-code:text-emerald-400 prose-code:p-1 prose-code:rounded-md 
                                                                     prose-code:before:content-none prose-code:after:content-none
 
-                                                                    /* --- Styles for the CODE BLOCK container --- */
                                                                     prose-pre:bg-slate-800 prose-pre:rounded-lg prose-pre:shadow-lg                                                                    
                                                                     ">
                                                                         <ReactMarkdown 
@@ -251,15 +244,9 @@ function LeftPanel({
                         {/* Chatbot Tab Content */}
                         {activeTab === "chatbot" && (
                             <div className="h-full flex flex-col">
-                                <Chatbot
-                                    messages={messages}
-                                    setMessages={setMessages}
-                                    problemStatement={problemStatement}
-                                    userCodeT1={userCodeT1}
-                                    agentCodeT1={agentCodeT1}
-                                    onAgentCodeUpdate={handleAgentCodeChange}
-                                    lessonGoals={lessonGoals}
-                                    commonMistakes={commonMistakes}
+                                <Chatbot                                    
+                                    conversationHistory={conversationHistory}
+                                    onSendMessage={onSendMessage}
                                 />
                             </div>
                         )}
