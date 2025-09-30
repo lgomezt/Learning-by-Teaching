@@ -97,17 +97,16 @@ def load_problem_from_file(content: str):
 
 def list_all_problems():
     """
-    List all problems in the problems directory (for hardcoded templates).
+    List all problems in the problems directory with full markdown content.
     """
     files = glob.glob(os.path.join(PROBLEMS_DIR, "*.md"))
     problem_list = []
     for f in files:
-        post = frontmatter.load(f)
-        filename = os.path.splitext(os.path.basename(f))[0]
+        filename = os.path.basename(f)
+        with open(f, 'r', encoding='utf-8') as file:
+            content = file.read()
         problem_list.append({
-            "id": filename,
-            "title": post.get("title", ""),
-            "difficulty": post.get("difficulty", ""),
-            "tags": post.get("tags", []),
+            "fileName": filename,
+            "content": content
         })
-    return problem_list
+    return {"problems": problem_list}

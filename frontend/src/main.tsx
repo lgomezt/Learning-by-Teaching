@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./index.css";
 import App from "./App.tsx";
 import LandingPage from "./components/landingpage.tsx";
+import ProblemSelection from "./components/ProblemSelection/index.tsx";
 import FileProvider from "../context/filecontext.tsx";
 import Prism from 'prismjs';
 // import 'prismjs/themes/prism-okaidia.css';
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
         <FileProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/problem_selection" element={<ProblemSelection />} />
             <Route path="/ide" element={<App />} />
           </Routes>
         </FileProvider>

@@ -12,8 +12,8 @@ type SerializedFile = {
 type FileContextType = {
   files: File[];
   setFiles: (files: File[]) => void;
-  selectedFile: File | null;
-  setSelectedFile: (file: File | null) => void;
+  selectedFile: File | string | null;
+  setSelectedFile: (file: File | string | null) => void;
 };
 
 const FileContext = createContext<FileContextType | undefined>(undefined);
@@ -88,7 +88,7 @@ const deserializeFiles = (): File[] => {
 
 export default function FileProvider({ children }: { children: ReactNode }) {
   const [files, setFiles] = useState<File[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | string | null>(null);
   const location = useLocation();
 
   const shouldResetOnLanding = import.meta.env.DEV;
@@ -114,6 +114,12 @@ export default function FileProvider({ children }: { children: ReactNode }) {
         setSelectedFile(restoredFiles[parseInt(selectedIndex)]);
       }
     }
+
+    // Restore selected problem filename
+    const selectedProblem = sessionStorage.getItem('selectedProblem');
+    if (selectedProblem) {
+      setSelectedFile(selectedProblem);
+    }
   }, [location.pathname, shouldResetOnLanding]);
 
   // used for sessionStorage for setFiles
@@ -123,13 +129,20 @@ export default function FileProvider({ children }: { children: ReactNode }) {
   };
 
   // used for sessionStorage for setSelectedFile
-  const persistentSetSelectedFile = (file: File | null) => {
+  const persistentSetSelectedFile = (file: File | string | null) => {
     setSelectedFile(file);
-    
-    if (file) { const index = files.findIndex(f => f.name === file.name && f.lastModified === file.lastModified && f.size === file.size);
+
+    if (typeof file === 'string') {
+      // Store problem filename as string
+      sessionStorage.setItem('selectedProblem', file);
+      sessionStorage.removeItem('selectedFileIndex');
+    } else if (file) {
+      const index = files.findIndex(f => f.name === file.name && f.lastModified === file.lastModified && f.size === file.size);
       sessionStorage.setItem('selectedFileIndex', index.toString());
+      sessionStorage.removeItem('selectedProblem');
     } else {
       sessionStorage.removeItem('selectedFileIndex');
+      sessionStorage.removeItem('selectedProblem');
     }
   };
 
