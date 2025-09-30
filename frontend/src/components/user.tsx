@@ -3,8 +3,20 @@ import { useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import UserOutput from "./useroutput";
 import { FaUser, FaRobot } from 'react-icons/fa';
+import { diffChars } from 'diff';
 
 const TYPING_SPEED_MS = 15; 
+// A small helper function to create a delay in async functions
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+type UserProps = {
+  previousCode?: string; // The code state *before* the most recent change (T0)
+  targetCode?: string;   // The new, final code state we are animating towards (T1)
+  code?: string;         // The live, in-editor code (mostly for the user panel)
+  setCode?: (code: string) => void;
+  onCommit?: () => void;
+  isAgentPanel?: boolean;
+};
 
 const panelThemes = {
   user: {
@@ -21,18 +33,11 @@ const panelThemes = {
   }
 };
 
-type UserProps = {
-  start_code?: string;
-  code?: string;
-  setCode?: (code: string) => void;
-  onCommit?: () => void; 
-  isAgentPanel?: boolean;
-};
-
 function User({ 
-  start_code = "print('Hello, world!')", 
-  code, 
-  setCode, 
+  previousCode = "",
+  targetCode = "print('Hello, world!')",
+  code,
+  setCode,
   onCommit,
   isAgentPanel = false
 }: UserProps) {
@@ -45,58 +50,59 @@ function User({
 
   // Local state to control the text displayed in the editor.
   // This allows us to have an animated value that's separate from the incoming props.
-  const [displayedCode, setDisplayedCode] = useState(start_code);
-  const intervalRef = useRef<number | null>(null);
+  const [displayedCode, setDisplayedCode] = useState(targetCode);
+  const animationCancelled = useRef(false);
 
   // This effect handles the typing animation for the agent panel
   useEffect(() => {
-    // Stop any previous animation that might be running
-    if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-    }
+    animationCancelled.current = true; // Signal any previous animation to stop
 
-    // If it's the user panel, we just want to show the live code they are typing.
     if (!isAgentPanel) {
-        setDisplayedCode(code);
-        return;
+      setDisplayedCode(code); // User panel updates instantly
+      return;
     }
 
-    // --- Agent Panel Animation Logic ---
-    // When the committed code (start_code) from the agent changes, start the animation.
-    let currentIndex = 0;
-    const targetCode = start_code;
-    
-    // Set the editor to empty to start the animation from scratch
-    setDisplayedCode(""); 
+    // This function will run the new animation
+    const animate = async () => {
+      animationCancelled.current = false; // Reset cancellation flag for the new animation
+      
+      // Calculate the difference between the old and new code
+      const diffs = diffChars(previousCode, targetCode);
+      let currentCode = "";
 
-    intervalRef.current = window.setInterval(() => {
-      if (currentIndex < targetCode.length) {
-        setDisplayedCode((prev) => prev + targetCode[currentIndex]);
-        currentIndex++;
-      } else {
-        // Animation is complete, clear the interval
-        if (intervalRef.current) clearInterval(intervalRef.current);
-        // Ensure the final code is exactly the target code
-        setDisplayedCode(targetCode);
-        // Also update the parent's "live" code state to match
-        setCode(targetCode);
+      for (const part of diffs) {
+        if (animationCancelled.current) return; // Exit if a newer animation has started
+
+        if (part.added) {
+          // If a part of the text was ADDED, type it out character by character
+          for (const char of part.value) {
+            if (animationCancelled.current) return;
+            currentCode += char;
+            setDisplayedCode(currentCode);
+            await delay(TYPING_SPEED_MS);
+          }
+        } else if (!part.removed) {
+          // If a part was UNCHANGED, add it instantly
+          currentCode += part.value;
+          setDisplayedCode(currentCode);
+        }
+        // If a part was REMOVED, we do nothing, effectively deleting it.
       }
-    }, TYPING_SPEED_MS);
-
-    // This is a crucial cleanup function. It runs if the component is unmounted
-    // or if the effect re-runs, preventing memory leaks.
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      
+      // Ensure the final state is perfect and syncs with the parent
+      if (!animationCancelled.current) {
+          setDisplayedCode(targetCode);
+          setCode(targetCode);
       }
     };
 
-  }, [start_code, isAgentPanel]); // This effect re-runs when start_code changes
+    animate();
 
-
-  // useEffect(() => {
-  //   setCode(start_code);
-  // }, [start_code]);
+    // Cleanup function to cancel animation on unmount or re-render
+    return () => {
+      animationCancelled.current = true;
+    };
+  }, [targetCode, previousCode, isAgentPanel]);
 
   useEffect(() => {
     async function load() {

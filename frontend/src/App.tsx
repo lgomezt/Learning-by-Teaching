@@ -224,7 +224,8 @@ function App() {
             <div className="flex flex-1 flex-col">
                 {/* User's editor */}
                 <User 
-                    start_code={userCodeT1} 
+                    previousCode={userCodeT0}
+                    targetCode={userCodeT1} 
                     code={liveUserCode} 
                     setCode={setLiveUserCode} 
                     onCommit={commitUserCode} 
@@ -232,7 +233,8 @@ function App() {
                 
                 {/* Agent's editor */}
                 <User 
-                    start_code={agentCodeT1} 
+                    previousCode={agentCodeT0} 
+                    targetCode={agentCodeT1}   
                     code={liveAgentCode} 
                     setCode={setLiveAgentCode} 
                     onCommit={commitAgentCode}
