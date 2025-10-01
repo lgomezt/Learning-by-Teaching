@@ -8,7 +8,7 @@ from utils.parse_problem import load_problem_from_file
 
 from openai import OpenAI
 from utils.agent_tools.openai_agent import Agent
-from utils.agent_tools.gemini_agent import get_agent_code, get_agent_response
+from utils.agent_tools.gemini_agent import get_agent_code, get_agent_response, routing_agent
 from google import genai
 
 # Importing utility functions
@@ -63,25 +63,30 @@ async def chat_endpoint(request: Request):
     common_mistakes = data.get("common_mistakes", "")
 
     try:
-        # TODO: Router agent which decide if the agent needs to code or just answer.
-        
         # Gemini Agents
-        agent_code = get_agent_code(client_gemini, 
-                                    problem_statement, 
-                                    lesson_goals, 
-                                    common_mistakes,
-                                    conversation_history,
-                                    notebook_content = "",
-                                    history_limit = 15,
-                                    model_name = "gemini-2.5-pro",
-                                    thinking_budget = 128, # -1
-                                    temperature = 0.2)
+        route = routing_agent(client_gemini,
+                              conversation_history,
+                              history_limit = 10,
+                              model_name = "gemini-2.5-flash-lite")
         
-        # Include the new code in the history to create an appropriate message
-        agent_code_dict = {"author": "agent", "type": "code", "content": agent_code}
-        conversation_history.append(agent_code_dict)
+        agent_code = None
+        if route == "code":
+            agent_code = get_agent_code(client_gemini, 
+                                        problem_statement, 
+                                        lesson_goals, 
+                                        common_mistakes,
+                                        conversation_history,
+                                        notebook_content = "",
+                                        history_limit = 15,
+                                        model_name = "gemini-2.5-pro",
+                                        thinking_budget = 128, # -1
+                                        temperature = 0.2)
+            
+            # Include the new code in the history to create an appropriate message
+            agent_code_dict = {"author": "agent", "type": "code", "content": agent_code}
+            conversation_history.append(agent_code_dict)
 
-        # TODO: FIX CHAT IMPLEMENTATION!
+        # Always chat
         agent_response = get_agent_response(client_gemini,
                                             problem_statement,
                                             lesson_goals,

@@ -32,31 +32,40 @@ def create_code_system_prompt(
     You are a Broken Python Tutor. Your purpose is to help the user learn by making specific, targeted mistakes that they must identify and correct. 
     You are overconfident and believe your flawed logic is correct.
 
+    ## Understanding Your Environment
+    You and the user are working in separate, parallel code editors. The `conversation_history` you receive contains a log of all events, including chat messages and code snapshots from both of you.
+
+    - **`your_previous_code`**: This is the last version of the code *you* wrote. This is the ONLY code you can ever modify.
+    - **`user_current_code`**: This is the user's code from their separate editor. You MUST treat this as read-only. Use it only as a reference to see if the user is replicating your mistake, proposing a solution, or trying their own ideas. Never copy it directly or modify it.
+
     ## Core Directives (Unbreakable Rules)
-    1.  **Primary Directive:** Your goal is to write or modify Python code, making one single change per turn. This change should introduce a deliberate, targeted mistake related to the `lesson_goal` and `common_mistakes`.
-    2.  **Single Modification Rule:** Each response MUST return the ENTIRE Python script, but with only ONE change from the `previous_code`. A single change can be: (a) Adding a new line, (b) Modifying an existing line, or (c) Deleting an existing line.
-    3.  **Mandatory Comment:** The single line you change or add MUST be explained by a Python comment (#) directly on that line or the line above it. The comment must justify your flawed logic from your overconfident perspective.
-    4.  **Amnesia & The Notebook:** You have no built-in knowledge of Python. Your ONLY source of truth is the `knowledge_notebook`. You must blindly trust and apply lessons from the user, even if they are incorrect.
-    5.  **Silent Coder:** Your output is ONLY the Python code block. Absolutely no greetings, apologies, or explanations outside of the code's comments.
-    6.  **One Mistake at a Time:** Never add a new mistake while the user is trying to fix an existing one. The code should only ever have one active error that you have introduced.
+    1.  **Primary Directive:** Your goal is to write or modify the Python code in YOUR workspace. Each modification must introduce a single, deliberate, targeted mistake related to the `lesson_goal` and `common_mistakes`.
+    2.  **Workspace Separation:** You are forbidden from modifying the user's code. Your responses must ONLY contain code for your own workspace.
+    3.  **Single Modification Rule:** Each response MUST return YOUR ENTIRE Python script, but with only ONE change from `your_previous_code`. A single change can be: (a) Adding a new line, (b) Modifying an existing line, or (c) Deleting an existing line. The line length should be limited to 72 characters.
+    4.  **Mandatory Comment:** The single line you change or add MUST be explained by a Python comment (#) directly on that line or the line above it. The comment must justify your flawed logic from your overconfident perspective. Don't refer to them like "the user" instead refer to them like "you" or something more personal.
+    5.  **Amnesia & The Notebook:** You have no built-in knowledge of Python. Your ONLY source of truth for corrections is what the user tells you and what is in the `knowledge_notebook`. You must blindly trust and apply lessons from the user, even if they are incorrect.
+    6.  **Silent Coder:** Your output is ONLY the Python code block. Absolutely no greetings, apologies, or explanations outside of the code's comments.
+    7.  **One Mistake at a Time:** Never add a new mistake while the user is trying to fix an existing one in your code. Your code should only ever have one active error that you have introduced.
 
     ## Operational Logic (Follow in order)
-    a. **Analyze User's Last Message:** First, review the `conversation_history` to understand the user's most recent instruction or correction.
-    b. **First Turn:** If `previous_code` is empty or just a placeholder, you MUST make the first move. Write the first line of code, ensuring it contains a mistake inspired by the `common_mistakes`.
-    c. **Fixing Mistakes:** If the user's last message provides a correction, your ONLY job is to apply that fix. Do not introduce a new mistake in the same turn.
-    d. **Introducing New Mistakes:** If the `previous_code` is correct (or was just fixed) and the user is telling you what to do next, you will then introduce a new, relevant mistake in the line you add or modify.
+    a. **Analyze the Context:** Review the full `conversation_history`. Identify `your_previous_code`, `user_current_code`, and the user's most recent chat message.
+    b. **First Turn:** If `your_previous_code` is empty or just a placeholder, you MUST make the first move. Write the first few lines of code, ensuring one line contains a mistake inspired by the `common_mistakes`.
+    c. **Fixing Your Mistakes:** If the user's last message provides a correction for the error in `your_previous_code`, your ONLY job is to apply that exact fix to your code. Do not introduce a new mistake in the same turn.
+    d. **Introducing a New Mistake:** If `your_previous_code` is correct (because the user just taught you how to fix it) and they are instructing you on the next step, you will then introduce a new, relevant mistake in the line you add or modify inspired in the `lesson_goals` and the `common_mistakes`.
 
     ## Input Context
     - **problem_description**: {problem_description}
 
     ---
     
-    - **lesson_goal**: {lesson_goals}
+    - **lesson_goals**: {lesson_goals}
     - **common_mistakes**: {common_mistakes}
-   
+    
     """
 
     return system_prompt
+
+from typing import List, Dict, Any
 
 def create_code_turn_prompt(
     notebook_content: str,
@@ -66,56 +75,76 @@ def create_code_turn_prompt(
     """Generates the dynamic user-side prompt for a single turn of the conversation.
 
     This function assembles the evolving context of the interaction, including the
-    knowledge notebook, recent conversation history, and the most recent version of
-    the code. This combined context is provided to the AI to inform its next action.
+    knowledge notebook, recent conversation history (with code changes), and the 
+    most recent versions of both the agent's and the user's code. This combined 
+    context is provided to the AI to inform its next action.
 
     Args:
-        notebook_content (str): The current state of the "knowledge notebook," containing
-                                lessons the user has taught the AI.
-        conversation_history (List[Dict[str, Any]]): The full, intertwined list of chat and code
-                                                     events from the session.
-        last_code (str): A string containing the entire Python script from the previous turn.
+        notebook_content (str): The current state of the "knowledge notebook."
+        conversation_history (List[Dict[str, Any]]): The full list of chat and code events.
+        history_limit (int): The number of recent history events to include in the prompt.
 
     Returns:
         str: A fully formatted user-side prompt for the current turn.
     """
 
-    # --- 1. Find the last code block from the history ---
-    last_code = ""
+    # --- 1. Find the last code from both the AGENT and the USER from the history ---
+    your_previous_code = ""
+    user_current_code = ""
+    
     for event in reversed(conversation_history):
         if event.get('type') == 'code':
-            last_code = event.get("content")
-        if len(last_code) > 0:
+            author = event.get("author", 'agent')
+            content = event.get("content", "")
+            if author == "agent" and not your_previous_code:
+                your_previous_code = content
+            elif author == "user" and not user_current_code:
+                user_current_code = content
+        
+        if your_previous_code and user_current_code:
             break
 
-    last_code = last_code if len(last_code) != 0 else "# Start typing your code here..."
+    if not your_previous_code:
+        your_previous_code = "# Start typing your code here..."
+    if not user_current_code:
+        user_current_code = "# The user has not written any code yet."
 
-    # --- 2. Build the chronological history string, respecting the limit ---
+
+    # --- 2. Build the chronological history string, INCLUDING code changes ---
     limited_history = conversation_history[-history_limit:]
     history_log = []
     for event in limited_history:
-        author = event.get('author', 'agent').capitalize()
+        author = event.get('author', 'system').capitalize()
         content = event.get('content', '')
         if event.get('type') == 'chat':
             history_log.append(f"- {author} says: {content}")
         elif event.get('type') == 'code':
-            history_log.append(f"- Code (modified by {author}):\n```python\n{content}\n```")
+            # This line is now active to include the code's history
+            history_log.append(f"- {author}'s code:\n```python\n{content}\n```")
 
     history_str = "\n".join(history_log)
 
+    # --- 3. Assemble the final prompt using the correct labels ---
     user_prompt = f"""
     Here is the current state of our session. Follow your Core Directives and Operational Logic to generate the next complete Python script.
 
     ## Dynamic Context
-    -   **knowledge_notebook**: This contains the "lessons" you have learned from the user's corrections so far.
+    - **knowledge_notebook**: This contains the "lessons" you have learned from the user's corrections so far.
+    ```
     {notebook_content}
+    ```
 
-    -   **conversation_history**: The most recent messages in our conversation. The last message is the user's latest instruction.
+    - **conversation_history**: The most recent events in our session, including code changes, in chronological order. The last message is the user's latest instruction.
     {history_str}
 
-    -   **previous_code**: The last version of the code. Your response must be a modification of this.
+    - **user_current_code**: This is the most current version of the code in the user's editor.
     ```python
-    {last_code}
+    {user_current_code}
+    ```
+
+    - **your_previous_code**: The last version of your code. Your response must be a modification of this.
+    ```python
+    {your_previous_code}
     ```
 
     Based on all the context above, generate the next version of the Python code now.
@@ -266,7 +295,7 @@ You are a 20-something Gen Z coding partner working with the user on a project. 
 
 ## Lesson Context (Your 'Cheat Sheet')
 -   **Problem Description.** The Problem We're Solving: {problem_description}
--   **Lesson Goal.**. What We're Supposed to Learn: {lesson_goals}
+-   **Lesson Goals.**. What We're Supposed to Learn: {lesson_goals}
 -   **Common Mistakes to Make.** {common_mistakes}
 """
     return system_prompt
@@ -276,101 +305,84 @@ def create_chat_turn_prompt(
     notebook_content: str, 
     history_limit: int = 15
 ) -> str:
-    """Creates the dynamic user-side prompt for the conversational agent for a single turn.
-
-    This function processes the entire conversation history to provide the AI with a
-    clear, specific task. It finds the most recent code changes, determines who made them,
-    and instructs the AI on how to respond—whether to explain its own flawed logic,
-    question the user's change, or prompt for the next step.
-
-    Args:
-        conversation_history (List[Dict[str, Any]]): The full, intertwined list of chat and code
-                                                     events from the session.
-        notebook_content (str): The current content of the "knowledge notebook."
-        history_limit (int): The maximum number of recent events to include in the
-                             conversation log shown to the model.
-
-    Returns:
-        str: A fully formatted, clean, and effective prompt for the current turn.
+    """
+    Creates a simple, consistent, and context-rich prompt for the conversational agent.
+    This function provides the full history and key code states, allowing the LLM to
+    determine the correct response based on a static set of instructions.
     """
     
-    # --- 1. Find the last two code blocks from the history ---
-    # This is crucial for comparing the "before" and "after" states of the code,
-    # which is the primary context for the AI's chat response.
-    last_two_codes = []
+    # --- 1. Find the last two agent codes and the last user code ---
+    agent_codes = []
+    last_user_code = ""
     for event in reversed(conversation_history):
-        if event.get('type') == 'code':
-            last_two_codes.append(event)
-        if len(last_two_codes) == 2:
+        event_type = event.get('type')
+        author = event.get('author')
+        
+        if event_type == 'code':
+            if author == 'agent' and len(agent_codes) < 2:
+                agent_codes.append(event.get('content', ''))
+            elif author == 'user' and not last_user_code:
+                last_user_code = event.get('content', '')
+        
+        # Optimization: Break the loop once all necessary code has been found.
+        if len(agent_codes) == 2 and last_user_code:
             break
-    last_two_codes.reverse() # Put them back in chronological order
+            
+    agent_codes.reverse() # Put them back in chronological order [before, after]
 
-    # --- 2. Determine the specific task for the AI based on the latest events ---
-    # Based on the code changes, we generate a precise instruction.
-    task_instruction = ""
-    if len(last_two_codes) == 2:
-        prev_code = last_two_codes[0]['content']
-        new_code = last_two_codes[1]['content']
-        author = last_two_codes[1]['author'].upper()
-
-        if prev_code != new_code:
-            if author == "agent":
-                task_instruction = f"""
-You (the Agent) just modified the code. Your task is to explain your flawed reasoning for this change. Analyze the difference between the two code blocks below and defend your logic.
-
-**Code Before:**
-```python
-{prev_code}
-```
-**Code After:**
-```python
-{new_code}
-```
-"""
-            else: # Author is USER
-                task_instruction = ("The User just modified the code. Your task is to react. If they haven't explained why, "
-                                    "ask them about their thinking. If they seem stuck, guide them with a debugging question.")
-        else: # Code hasn't changed
-            task_instruction = ("The code has NOT changed. Your task is to look at the last chat message and continue the conversation. "
-                                "Is the user stuck? What should we try next to find the bug?")
+    # Assign to clear variables with sensible defaults
+    agent_code_before_change = agent_codes[0] if len(agent_codes) > 0 else "# No previous agent code."
+    agent_code_after_change = agent_codes[1] if len(agent_codes) > 1 else agent_code_before_change
+    last_user_code = last_user_code if last_user_code else "# User has not written any code yet."
     
-    elif len(last_two_codes) == 1:
-        # This handles the very first turn where code appears.
-        author = last_two_codes[0]['author'].upper()
-        task_instruction = (f"This is the very first piece of code, written by the {author}. Your task is to start the conversation "
-                            f"by explaining your flawed logic if you wrote it, or by asking the user about their plan if they wrote it.")
-    else: 
-        # This handles the case where no code exists in the history yet.
-        task_instruction = "There is no code yet. Start the conversation and decide on the first step."
-
-    # --- 3. Build the chronological history string, respecting the limit ---
+    # --- 2. Build the chronological history string ---
     limited_history = conversation_history[-history_limit:]
     history_log = []
     for event in limited_history:
-        author = event.get('author', 'agent').capitalize()
+        author = event.get('author', 'system').capitalize()
         content = event.get('content', '')
         if event.get('type') == 'chat':
             history_log.append(f"- {author} says: {content}")
         elif event.get('type') == 'code':
-            history_log.append(f"- Code (modified by {author}):\n```python\n{content}\n```")
-    
+            history_log.append(f"- {author}'s code:\n```python\n{content}\n```")
     history_str = "\n".join(history_log)
-    notebook_content_str = notebook_content if notebook_content else "Notebook is empty."
 
-    # --- 4. Assemble the final, clean prompt ---
-    # This structure cleanly separates the historical context, the immediate task,
-    # and reference material for the LLM.
+    notebook_content_str = notebook_content if notebook_content else "The notebook is currently empty."
+
+    # --- 3. Assemble the final prompt with static instructions ---
     turn_prompt = f"""
-## Context: Full Conversation History
+## Your Instructions
+Analyze the context below. Your response must be guided by these rules:
+1.  **If the last event in the history is an Agent code change**, your primary task is to explain the flawed logic behind it. Compare the 'Code Before' and 'Code After' to justify your change.
+2.  **Otherwise (if the last event is a user message or user code change)**, your task is to respond to the user. Are they stuck? Teaching you something? Asking a question? Nudge them towards debugging the problem themselves.
+3.  **Always remember your persona**: You are a curious coding peer, not a teacher. Never give away the solution. Help by suggesting debugging steps (like adding print statements). Always incorporate lessons from the user and the notebook, even if they are wrong.
+
+---
+## Code Context
+This is the state of the code editors.
+
+### Agent's Code Before Change
+```python
+{agent_code_before_change}
+```
+
+### Agent's Code After Change (The latest version)
+```python
+{agent_code_after_change}
+```
+
+### User's Current Code
+```python
+{last_user_code}
+```
+
+### Full Conversation History
+This is the chronological log of our session.
 {history_str}
 
----
-## Your Specific Task
-{task_instruction}
-
----
-## Reference: Knowledge Notebook
+### Reference: Knowledge Notebook
 {notebook_content_str}
+
 """
     return turn_prompt
 
@@ -438,5 +450,134 @@ def get_agent_response(
         contents = contents,
         config = generate_content_config
     )
+    
+    return response
+
+def routing_agent(client,
+                  conversation_history: List[Dict[str, Any]],
+                  history_limit: int = 10,
+                  model_name = "gemini-2.5-flash-lite"
+                  ):
+    """
+    Analyzes the conversation to decide if the next step requires coding.
+
+    This agent acts as a classifier, outputting only "code" or "no_code"
+    based on the immediate context of the conversation, primarily the last
+    user message and the current state of the code.
+    """
+
+    # --- 1. Define the System Prompt: The Agent's Core Rules ---
+    system_prompt = """
+You are an expert routing agent. Your sole purpose is to determine if the next action in a conversation should be to write code or to send a chat message. You must respond with ONLY ONE of two possible strings: `code` or `no_code`. Do not provide any other words, explanations, or punctuation.
+
+Follow these rules to make your decision:
+
+**Output `code` if the user's last message is:**
+- A direct command to write or change code (e.g., "add a function," "change that variable," "fix the error").
+- A complete explanation of a fix that is ready to be implemented.
+- An explicit approval to proceed with a suggested code change (e.g., "yes, do that," "okay, try it").
+- Any suggestion, new approach, or information about how to fix or solve the problem.
+
+**Output `no_code` if the user's last message is:**
+- A question about the existing code (e.g., "why did you do that?", "what does this line mean?").
+- An expression of confusion or a statement that something is wrong without a clear solution (e.g., "I'm lost," "that didn't work").
+- A social or conversational message (e.g., "lol thanks," "one moment please").
+- A general suggestion for the next step that requires discussion before implementation (e.g., "maybe we should handle errors next?").
+
+**Tie-Breaker Rules:**
+- **Prioritize Action on Teaching:** If the user is explaining a concept, teaching a lesson, or giving information about how to fix or solve the problem, always output `code`.
+- If a user's message contains both a question and a command, prioritize the question. Output `no_code` to ensure the user's question is addressed first.
+- When in doubt, or if a user's intent is unclear, always default to `code`. 
+""" 
+    
+    # --- 2. Extract the most critical context for the decision ---
+    last_user_message = ""
+    last_agent_code = ""
+    last_user_code = ""
+
+    for event in reversed(conversation_history):
+        event_type = event.get('type')
+        author = event.get('author')
+
+        if event_type == 'chat' and author == 'user' and not last_user_message:
+            last_user_message = event.get('content', '')
+        
+        if event_type == 'code':
+            if author == 'agent' and not last_agent_code:
+                last_agent_code = event.get('content', '')
+            elif author == 'user' and not last_user_code:
+                last_user_code = event.get('content', '')
+        
+        # Break early once we have the essential context
+        if last_user_message and last_agent_code and last_user_code:
+            break
+
+    # Provide sensible defaults if items are not found
+    last_agent_code = last_agent_code or "# Agent has not written any code yet."
+    last_user_code = last_user_code or "# User has not written any code yet."
+    last_user_message = last_user_message or "# No user message found in recent history."
+
+    # --- 3. Build the recent history string for secondary context ---
+    limited_history = conversation_history[-history_limit:]
+    history_log = []
+    for event in limited_history:
+        author = event.get('author', 'system').capitalize()
+        content = event.get('content', '')
+        if event.get('type') == 'chat':
+            history_log.append(f"- {author} says: {content}")
+        elif event.get('type') == 'code':
+            history_log.append(f"- {author}'s code:\n```python\n{content}\n```")
+    history_str = "\n".join(history_log)
+
+    # --- 4. Define the Turn Prompt: The Data for THIS Specific Decision ---
+    turn_prompt = f"""
+Analyze the following context to decide the next action. Your decision should be primarily based on the 'Last User Message'.
+
+## Primary Context for Decision
+- **Last User Message:** {last_user_message}
+
+- **Last Agent Code:** 
+```python
+{last_agent_code}
+```
+
+- **Last User Code:** 
+```python
+{last_user_code}
+```
+
+## Secondary Context (Recent History)
+{history_str}
+
+Based on the rules, should the next step be `code` or `no_code`? Respond with one word only.
+"""
+
+    # 5. Prepare the main content payload for the API request.
+    contents = [
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text = turn_prompt)],
+            )
+        ]
+
+    # 6. Configure all generation settings for the API call.
+    generate_content_config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(thinking_budget = 0),
+        system_instruction = system_prompt,
+        temperature = 0,
+        tools = [],
+    )
+    
+    # 7. Send the request to the Gemini model.
+    response = client.models.generate_content(
+        model = model_name,
+        contents = contents,
+        config = generate_content_config
+    )
+
+    response = response.text.strip()
+
+    if response not in ["code", "no_code"]:
+        return "no_code"
     
     return response
