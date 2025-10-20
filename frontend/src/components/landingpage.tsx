@@ -1,7 +1,7 @@
 import Navbar from "./navbar";
 import HomePage from "./homepage";
-import UploadPage from "./uploadpage";
-import FileTable from "./filetable";
+import UploadPage from "./Deprecated/uploadpage";
+import FileTable from "./Deprecated/filetable";
 
 export default function LandingPage() {
 
@@ -13,7 +13,7 @@ export default function LandingPage() {
     return (
     <div className="font-sans">
         {/* Navbar */}
-        <Navbar autoscroll={autoscroll}></Navbar>
+        {/* <Navbar autoscroll={autoscroll}></Navbar> */}
 
         {/* First Page */}
         <section id="home" className="h-screen relative overflow-hidden flex items-center justify-center">
@@ -21,14 +21,14 @@ export default function LandingPage() {
         </section>
 
         {/* Second Page */}
-        <section id="upload" className="min-h-screen bg-gradient-to-b from-slate-200 via-white to-slate-200 flex items-center justify-center py-20">
+        {/* <section id="upload" className="min-h-screen bg-gradient-to-b from-slate-200 via-white to-slate-200 flex items-center justify-center py-20">
           <UploadPage autoscroll={autoscroll}></UploadPage>
-        </section>
+        </section> */}
 
         {/* Third Page */}
-        <section id="lessons" className="min-h-screen bg-gradient-to-b from-slate-200 to-slate-300 flex items-center justify-center py-20">
+        {/* <section id="lessons" className="min-h-screen bg-gradient-to-b from-slate-200 to-slate-300 flex items-center justify-center py-20">
           <FileTable></FileTable>
-        </section>
+        </section> */}
 
         {/* Fourth Page */}
         <section id="about" className="h-screen bg-white flex items-center justify-center">

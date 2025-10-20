@@ -10,7 +10,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Filters } from './Filters';
 import { ProblemList } from './ProblemList';
 import type { Problem, FiltersState } from './types';
-import { loadProblemsFromDirectory } from './utils';
+import { loadProblemsFromDirectory, parseProblemMarkdown } from './utils';
 
 function ProblemSelection() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -38,6 +38,41 @@ function ProblemSelection() {
     });
     return Array.from(topicSet);
   }, [problems]);
+
+  const handleAddNewProblem = (file: File) => {
+    // 1. Create a new FileReader instance
+    const reader = new FileReader();
+
+    // 2. Define what happens when the file is successfully read
+    reader.onload = (event) => {
+      // The file content is now available as a string
+      const content = event.target?.result as string;
+      if (!content) {
+        console.error("Could not read file content.");
+        return;
+      }
+
+      // 3. Call your existing parser with the file's name and its content!
+      const newProblem = parseProblemMarkdown(file.name, content);
+
+      // 4. If parsing was successful, update the state
+      if (newProblem) {
+        setProblems(currentProblems => [newProblem, ...currentProblems]);
+      } else {
+        // Add feedback for the user if the markdown format is wrong
+        console.error("Failed to parse the markdown file. Check the format.", file.name);
+        alert("Error: The uploaded markdown file could not be parsed. Please check the frontmatter format.");
+      }
+    };
+
+    // 5. Define what happens if there's an error reading the file
+    reader.onerror = (error) => {
+      console.error("Error reading the file:", error);
+    };
+
+    // 6. Start the reading process. This is an asynchronous operation.
+    reader.readAsText(file);
+  };
 
   const filteredProblems = useMemo(() => {
     return problems.filter((problem: Problem) => {
@@ -82,7 +117,11 @@ function ProblemSelection() {
             setFilters={setFilters}
             availableTopics={availableTopics}
           />
-          <ProblemList problems={filteredProblems} activeTopicFilter={filters.topic} />
+          <ProblemList 
+            problems={filteredProblems} 
+            activeTopicFilter={filters.topic} 
+            onNewProblem={handleAddNewProblem}
+            />
         </div>
       </main>
     </div>

@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import { ProblemCard } from './ProblemCard';
 import type { Problem } from './types';
+import { UploadProblemCard } from './UploadProblemCard';
 
 interface ProblemListProps {
   problems: Problem[];
   activeTopicFilter: string[];
+  onNewProblem: (file: File) => void;
 }
 
-export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicFilter }) => {
+export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicFilter, onNewProblem }) => {
 
   const groupedProblems = useMemo(() => {
     const groups: { [key: string]: Problem[] } = {};
@@ -49,12 +51,19 @@ export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicF
 
   return (
     <div className="space-y-12">
-      {sortedTopics.map((topic) => (
+      {sortedTopics.map((topic, index) => (
         <section key={topic}>
           <h2 className="text-xl font-medium text-white border-b-2 border-slate-700 pb-2 mb-6">
             {topic}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* We only show this card in the very first topic section (index === 0) */}
+            {/* and only when the 'All' filter is active, so it feels like a general 'add' button. */}
+            {activeTopicFilter.includes('All') && index === 0 && (
+              <UploadProblemCard onFileUpload={onNewProblem} />
+            )}
+
+            {/* The existing logic to map over problems remains the same */}
             {groupedProblems[topic].map((problem) => (
               <ProblemCard key={problem.id} problem={problem} />
             ))}

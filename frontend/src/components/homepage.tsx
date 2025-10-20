@@ -1,6 +1,9 @@
+import LoginButton from "./loginButton";
+
 type HomePageProps = {
   autoscroll: (page: string) => void;
 };
+
 export default function HomePage({ autoscroll } : HomePageProps) {
   return ( <>
       {/* Background */}
@@ -14,23 +17,26 @@ export default function HomePage({ autoscroll } : HomePageProps) {
       
       {/* Content */}
       <div className="text-center relative z-10">
-      <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-slate-700 via-green-600 to-blue-600 bg-clip-text text-transparent mb-6">
-          TEACHING THE AGENT
+      <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-slate-700 via-green-600 to-blue-600 bg-clip-text text-transparent mb-6 pb-2">
+          Teaching the Agent
       </h1>
-      <p className="text-xl md:text-2xl text-gray-600 mb-8">
+      {/* <p className="text-xl md:text-2xl text-gray-600 mb-8">
           Redefine Learning
-      </p>
+      </p> */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button 
+          {/* <button 
           onClick={() => autoscroll("upload")}
           className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
           >
           Upload Lesson Plan
-          </button>
-          <button onClick={() => autoscroll("lessons")}
+          </button> */}
+
+          <LoginButton />
+       
+          {/* <button onClick={() => autoscroll("lessons")}
           className="bg-white/20 backdrop-blur-sm border border-white/30 text-gray-700 font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 hover:bg-white/30">
               Enter IDE
-          </button>
+          </button> */}
       </div>
       </div>
     </>

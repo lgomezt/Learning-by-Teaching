@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useFiles } from "../../context/filecontext";
+import { useFiles } from "../../../context/filecontext";
 
 type UploadPageProps = {
   autoscroll: (page: string) => void;

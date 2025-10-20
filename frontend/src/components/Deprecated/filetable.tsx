@@ -1,4 +1,4 @@
-import { useFiles } from "../../context/filecontext";
+import { useFiles } from "../../../context/filecontext";
 import { useNavigate } from "react-router-dom";
 
 function FileTable() {

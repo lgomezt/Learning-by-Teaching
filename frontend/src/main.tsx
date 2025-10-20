@@ -1,17 +1,28 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Auth0Provider } from '@auth0/auth0-react';
 import "./index.css";
+
 import App from "./App.tsx";
 import LandingPage from "./components/landingpage.tsx";
 import ProblemSelection from "./components/ProblemSelection/index.tsx";
 import FileProvider from "../context/filecontext.tsx";
+
 import Prism from 'prismjs';
 // import 'prismjs/themes/prism-okaidia.css';
 import 'prism-themes/themes/prism-nord.css';
 
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <Auth0Provider
+        domain="dev-fkayw3cti8dktcjt.us.auth0.com" 
+        clientId="9xyEgfcl5B8DFTUvMZYeUPSh7O4nzlmB" 
+        authorizationParams={{
+          redirect_uri: `${window.location.origin}/problem_selection`
+        }}
+    >
       <BrowserRouter>
         <FileProvider>
           <Routes>
@@ -21,5 +32,6 @@ createRoot(document.getElementById("root")!).render(
           </Routes>
         </FileProvider>
       </BrowserRouter>
+    </Auth0Provider>
   </StrictMode>
 );
