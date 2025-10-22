@@ -7,3 +7,6 @@ openai
 python-dotenv
 python-multipart
 google-genai
+sqlalchemy
+psycopg2-binary
+alembic
