@@ -56,6 +56,7 @@ function ProblemSelection() {
         // setProblems(loadedProblems.problems || []);
 
         // TODO: Change this to call the backend instead
+        // We need to fix list_all_problems() to allow the backend find the content for our interface
         const loadedProblems = await loadProblemsFromDirectory(); 
         setProblems(loadedProblems)
       } catch (error) {
