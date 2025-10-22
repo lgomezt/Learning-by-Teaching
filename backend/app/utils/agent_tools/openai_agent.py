@@ -1,7 +1,7 @@
 # File: backend/utils/agent_tools/openai_agent.py
 
 import json
-from utils.agent_tools.tools_registry import tools, function_map
+from .tools_registry import tools, function_map
 
 system_prompt_talk = """
 ## Who are you?

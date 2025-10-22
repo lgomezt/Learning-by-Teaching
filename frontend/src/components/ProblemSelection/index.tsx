@@ -7,12 +7,14 @@
 // icons/ - SVG icon components (CheckCircle, CodeBracket, Signal)
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { Filters } from './Filters';
 import { ProblemList } from './ProblemList';
 import type { Problem, FiltersState } from './types';
 import { loadProblemsFromDirectory, parseProblemMarkdown } from './utils';
 
 function ProblemSelection() {
+  const { user, isAuthenticated, isLoading } = useAuth0();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FiltersState>({
@@ -22,19 +24,58 @@ function ProblemSelection() {
   });
 
   useEffect(() => {
-    async function fetchProblems() {
-      setLoading(true);
-      const loadedProblems = await loadProblemsFromDirectory();
-      setProblems(loadedProblems);
-      setLoading(false);
+    // This effect runs when the component mounts or auth state changes.
+    const initialize = async () => {
+      // Step 1: Sync the user with our database
+      if (isAuthenticated && user) {
+        try {
+          // This is the user-sync logic from before
+          const response = await fetch('http://localhost:8000/api/users/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.sub,
+              email: user.email,
+              name: user.name,
+            }),
+          });
+          if (!response.ok) throw new Error('Failed to sync user');
+          const dbUser = await response.json();
+          console.log('User synced successfully:', dbUser);
+        } catch (error) {
+          console.error('Error syncing user:', error);
+        }
+      }
+    
+    // Step 2: Fetch the PARSED problems from the backend API
+    try {
+        setLoading(true);
+        // const response = await fetch('http://localhost:8000/api/problems');
+        // if (!response.ok) throw new Error('Failed to fetch problems from API');
+        // const loadedProblems = await response.json();
+        // setProblems(loadedProblems.problems || []);
+
+        // TODO: Change this to call the backend instead
+        const loadedProblems = await loadProblemsFromDirectory(); 
+        setProblems(loadedProblems)
+      } catch (error) {
+        console.error("Failed to fetch problems:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only run this entire process once Auth0 is done loading.
+    if (!isLoading) {
+      initialize();
     }
-    fetchProblems();
-  }, []);
+
+  }, [isAuthenticated, user, isLoading]);
 
   const availableTopics = useMemo(() => {
     const topicSet = new Set<string>();
     problems.forEach(problem => {
-      problem.topics.forEach(topic => topicSet.add(topic));
+      problem.topics?.forEach(topic => topicSet.add(topic));
     });
     return Array.from(topicSet);
   }, [problems]);
@@ -83,7 +124,7 @@ function ProblemSelection() {
         filters.difficulty === 'All' || problem.difficulty === filters.difficulty;
       const topicMatch =
         filters.topic.includes('All') ||
-        problem.topics.some(topic => filters.topic.includes(topic));
+        problem.topics?.some(topic => filters.topic.includes(topic));
       return statusMatch && difficultyMatch && topicMatch;
     });
   }, [filters, problems]);

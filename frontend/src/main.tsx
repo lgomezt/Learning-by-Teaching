@@ -10,7 +10,6 @@ import ProblemSelection from "./components/ProblemSelection/index.tsx";
 import FileProvider from "../context/filecontext.tsx";
 
 import Prism from 'prismjs';
-// import 'prismjs/themes/prism-okaidia.css';
 import 'prism-themes/themes/prism-nord.css';
 
 

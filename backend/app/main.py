@@ -1,20 +1,21 @@
 from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 import os
-
 from dotenv import load_dotenv
-from utils.parse_problem import load_problem_from_file
-
 from openai import OpenAI
-from utils.agent_tools.openai_agent import Agent
-from utils.agent_tools.gemini_agent import get_agent_code, get_agent_response, routing_agent
 from google import genai
 
+from .routers import users
+
 # Importing utility functions
-from utils.parse_problem import load_problem, list_all_problems
+from .utils.agent_tools.openai_agent import Agent
+from .utils.agent_tools.gemini_agent import get_agent_code, get_agent_response, routing_agent
+from .utils.parse_problem import load_problem_from_file, load_problem, list_all_problems
 
 app = FastAPI()
+app.include_router(users.router, prefix="/api")
 
 load_dotenv()
 

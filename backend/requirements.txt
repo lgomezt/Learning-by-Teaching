@@ -2,7 +2,7 @@ fastapi
 uvicorn
 markdown
 python-frontmatter
-pydantic
+pydantic[email]
 openai
 python-dotenv
 python-multipart

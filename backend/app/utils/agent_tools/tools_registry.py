@@ -111,7 +111,7 @@ tools = [
     }
 ]
 
-from utils.agent_tools.tool_impls import generate_code, update_python_code, explain_code
+from .tool_impls import generate_code, update_python_code, explain_code
 
 function_map = {
     "generate_code": generate_code,

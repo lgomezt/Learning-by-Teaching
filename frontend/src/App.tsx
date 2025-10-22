@@ -2,9 +2,7 @@
 import { useState, useEffect } from "react";
 
 import './App.css';
-import Header from './components/header';
 import LeftPanel from './components/leftpanel';
-//import Goal from './components/goal';
 import User from './components/user.tsx';
 import { fetchProblem } from './utils/api';
 import { useFiles } from "../context/filecontext.tsx";

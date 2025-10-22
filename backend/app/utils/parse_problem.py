@@ -110,3 +110,33 @@ def list_all_problems():
             "content": content
         })
     return {"problems": problem_list}
+
+# def list_all_problems():
+#     """
+#     Lists all problems by finding and parsing all markdown files using
+#     the existing load_problem function.
+#     """
+#     files = glob.glob(os.path.join(PROBLEMS_DIR, "*.md"))
+#     problem_list = []
+#     for f in files:
+#         # Extract the problem ID from the file path (e.g., "problems/nimm-game.md" -> "nimm-game")
+#         problem_id = os.path.splitext(os.path.basename(f))[0]
+        
+#         # Reuse your existing function to load and parse the problem
+#         problem = load_problem(problem_id)
+        
+#         if problem:
+#             # We only need a subset of the data for the list view
+#             # This makes the initial page load much faster
+#             problem_summary = {
+#                 "id": problem.get("id"),
+#                 "title": problem.get("title"),
+#                 "description": problem.get("description_meta"),
+#                 "difficulty": problem.get("difficulty"),
+#                 "topics": problem.get("tags", []),
+#                 "completed": False # Default completion status
+#             }
+#             problem_list.append(problem_summary)
+            
+#     # Return the list of problem summaries directly
+#     return problem_list
