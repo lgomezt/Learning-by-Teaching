@@ -1,9 +1,19 @@
+# /backend/Dockerfile
+
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.txt ./
+
+# Copy requirements from the backend subdir
+COPY backend/requirements.txt ./
+
+RUN pip install gunicorn
 RUN pip install -r requirements.txt
-RUN pip install debugpy
-COPY . .
+
+# Copy the backend source code from the backend subdir
+COPY backend/ .
+
+# Copy the problems directory from the root!
+COPY problems/ ./problems/
+
 EXPOSE 8000
-EXPOSE 5678
-CMD ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]

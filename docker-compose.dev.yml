@@ -1,0 +1,50 @@
+# docker-compose.dev.yml
+# Use this for LOCAL DEVELOPMENT ONLY
+# Run with: docker-compose -f docker-compose.dev.yml up --build
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev # Points to the dev Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "5173:5173" # Access frontend at http://localhost:5173
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev # Points to the dev Dockerfile
+    volumes:
+      - ./backend:/app
+      - ./problems:/app/problems
+    env_file:
+      - .env
+    depends_on: 
+      - db
+    ports:
+      - "8000:8000" # Access backend API
+      - "5678:5678" # For the Python debugger
+
+  db:
+    image: postgres:15-alpine 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env 
+    ports:
+      - "5432:5432" # So you can connect a local DB client
+    restart: always
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080" # Access adminer at http://localhost:8080
+
+volumes:
+  postgres_data:
