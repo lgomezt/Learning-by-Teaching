@@ -1,14 +1,14 @@
-import Navbar from "./navbar";
 import HomePage from "./homepage";
-import UploadPage from "./Deprecated/uploadpage";
-import FileTable from "./Deprecated/filetable";
+// import Navbar from "./navbar";
+// import UploadPage from "./Deprecated/uploadpage";
+// import FileTable from "./Deprecated/filetable";
 
 export default function LandingPage() {
 
-    const autoscroll = (id: string) => {
-        const uploadSection = document.getElementById(id);
-        uploadSection?.scrollIntoView({ behavior: 'smooth' });
-    };
+    // const autoscroll = (id: string) => {
+    //     const uploadSection = document.getElementById(id);
+    //     uploadSection?.scrollIntoView({ behavior: 'smooth' });
+    // };
 
     return (
     <div className="font-sans">
@@ -17,7 +17,8 @@ export default function LandingPage() {
 
         {/* First Page */}
         <section id="home" className="h-screen relative overflow-hidden flex items-center justify-center">
-            <HomePage autoscroll={autoscroll}></HomePage>
+            {/* <HomePage autoscroll={autoscroll}></HomePage> */}
+            <HomePage></HomePage>
         </section>
 
         {/* Second Page */}

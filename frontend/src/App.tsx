@@ -23,9 +23,6 @@ function App() {
     const [agentCodeT0, setAgentCodeT0] = useState<string>("");
     const [agentCodeT1, setAgentCodeT1] = useState<string>("");
 
-    const [userOutput, setUserOutput] = useState<string>("");
-    const [agentOutput, setAgentOutput] = useState<string>("");
-
     const [lessonGoals, setLessonGoals] = useState([]);
     const [commonMistakes, setCommonMistakes] = useState([]);
 

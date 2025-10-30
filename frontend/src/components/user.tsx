@@ -58,7 +58,7 @@ function User({
     animationCancelled.current = true; // Signal any previous animation to stop
 
     if (!isAgentPanel) {
-      setDisplayedCode(code); // User panel updates instantly
+      if(code) setDisplayedCode(code); // User panel updates instantly
       return;
     }
 
@@ -92,7 +92,7 @@ function User({
       // Ensure the final state is perfect and syncs with the parent
       if (!animationCancelled.current) {
           setDisplayedCode(targetCode);
-          setCode(targetCode);
+          if (setCode) setCode(targetCode);
       }
     };
 
@@ -107,6 +107,7 @@ function User({
   useEffect(() => {
     async function load() {
       // Import Pyodide from ESM-compatible URL
+      // @ts-ignore
       const pyodideModule = await import("https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.mjs");
       const pyodideInstance = await pyodideModule.loadPyodide({
         indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/",
@@ -138,7 +139,7 @@ function User({
   const handleEditorChange = (value: string | undefined) => {
     const newCode = value || "";
     // Update the parent's live code state immediately
-    setCode(newCode);
+    if (setCode) setCode(newCode);
     // If it's the user panel, also update the local display immediately
     if (!isAgentPanel) {
         setDisplayedCode(newCode);

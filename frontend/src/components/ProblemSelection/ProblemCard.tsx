@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Problem } from './types';
-import { Difficulty } from './types';
+import type { Problem, Difficulty } from './types';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { CodeBracketIcon } from './icons/CodeBracketIcon';
 import { SignalIcon } from './icons/SignalIcon';
@@ -12,9 +11,9 @@ interface ProblemCardProps {
 }
 
 const difficultyStyles: Record<Difficulty, string> = {
-  [Difficulty.Easy]: 'bg-green-500/10 text-green-400 ring-green-500/20',
-  [Difficulty.Medium]: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
-  [Difficulty.Hard]: 'bg-red-500/10 text-red-400 ring-red-500/20',
+  Easy: 'bg-green-500/10 text-green-400 ring-green-500/20',
+  Medium: 'bg-yellow-500/10 text-yellow-400 ring-yellow-500/20',
+  Hard: 'bg-red-500/10 text-red-400 ring-red-500/20',
 };
 
 export const ProblemCard: React.FC<ProblemCardProps> = ({ problem }) => {

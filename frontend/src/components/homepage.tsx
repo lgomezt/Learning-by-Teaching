@@ -1,10 +1,11 @@
 import LoginButton from "./loginButton";
 
-type HomePageProps = {
-  autoscroll: (page: string) => void;
-};
+// type HomePageProps = {
+//   autoscroll: (page: string) => void;
+// };
 
-export default function HomePage({ autoscroll } : HomePageProps) {
+// export default function HomePage({ autoscroll } : HomePageProps) {
+export default function HomePage() {
   return ( <>
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50 to-green-100"></div>

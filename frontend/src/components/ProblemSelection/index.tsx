@@ -6,7 +6,7 @@
 // utils.ts - Markdown parser to extract YAML frontmatter and loadProblemsFromDirectory() function
 // icons/ - SVG icon components (CheckCircle, CodeBracket, Signal)
 
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Filters } from './Filters';
 import { ProblemList } from './ProblemList';

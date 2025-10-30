@@ -1,5 +1,4 @@
-import type { Problem } from './types';
-import { Difficulty } from './types';
+import type { Problem, Difficulty } from './types';
 
 interface ProblemMetadata {
   title: string;
@@ -48,16 +47,16 @@ export function parseProblemMarkdown(fileName: string, content: string): Problem
     let difficulty: Difficulty;
     switch (metadata.difficulty.toLowerCase()) {
       case 'easy':
-        difficulty = Difficulty.Easy;
+        difficulty = 'Easy'; // <-- Correct
         break;
       case 'medium':
-        difficulty = Difficulty.Medium;
+        difficulty = 'Medium'; // <-- Correct
         break;
       case 'hard':
-        difficulty = Difficulty.Hard;
+        difficulty = 'Hard'; // <-- Correct
         break;
       default:
-        difficulty = Difficulty.Medium;
+        difficulty = 'Medium'; // <-- Correct
     }
 
     const id = fileName.replace('.md', '');

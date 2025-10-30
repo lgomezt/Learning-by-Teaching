@@ -9,7 +9,6 @@ import LandingPage from "./components/landingpage.tsx";
 import ProblemSelection from "./components/ProblemSelection/index.tsx";
 import FileProvider from "../context/filecontext.tsx";
 
-import Prism from 'prismjs';
 import 'prism-themes/themes/prism-nord.css';
 
 

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import type { FiltersState, StatusFilter, DifficultyFilter } from './types';
-import { Difficulty } from './types';
+import type { FiltersState, StatusFilter, DifficultyFilter, Difficulty } from './types';
 
 interface FiltersProps {
   activeFilters: FiltersState;
@@ -68,7 +67,9 @@ const MultiSelectTopicGroup: React.FC<{
 
 export const Filters: React.FC<FiltersProps> = ({ activeFilters, setFilters, availableTopics }) => {
   const STATUS_FILTERS = ['All', 'Completed', 'Incomplete'];
-  const DIFFICULTY_FILTERS = ['All', ...Object.values(Difficulty)];
+  // const DIFFICULTY_FILTERS = ['All', ...Object.values(Difficulty)];
+  const DIFFICULTY_VALUES: Difficulty[] = ['Easy', 'Medium', 'Hard'];
+  const DIFFICULTY_FILTERS = ['All', ...DIFFICULTY_VALUES];
 
   const allTopics = useMemo(() => ['All', ...availableTopics.sort()], [availableTopics]);
 
