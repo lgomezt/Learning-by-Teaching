@@ -8,7 +8,8 @@ WORKDIR /app
 COPY frontend/package*.json ./
 COPY frontend/tsconfig*.json ./
 
-RUN npm install
+# RUN npm install
+RUN npm ci
 
 # Copy the rest of the frontend source code from the frontend subdir
 COPY frontend/ .
