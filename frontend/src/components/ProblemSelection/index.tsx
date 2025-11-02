@@ -12,6 +12,7 @@ import { Filters } from './Filters';
 import { ProblemList } from './ProblemList';
 import type { Problem, FiltersState } from './types';
 import { loadProblemsFromDirectory, parseProblemMarkdown } from './utils';
+import LoadingComponent from '../../utils/loadingcomponent';
 
 function ProblemSelection() {
   const { user, isAuthenticated, isLoading } = useAuth0();
@@ -132,12 +133,7 @@ function ProblemSelection() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 font-sans flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-          <p className="text-lg text-slate-300">Loading problems...</p>
-        </div>
-      </div>
+      <LoadingComponent message="Loading..." />
     );
   }
 
