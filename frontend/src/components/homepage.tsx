@@ -6,18 +6,13 @@ export default function HomePage() {
       <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
         <video
             autoPlay
-            loop
             muted
             playsInline
+            loop
             className="absolute z-0 w-full h-full object-cover"
             >
             <source
-                src="https://res.cloudinary.com/dnxxtodgb/video/upload/A_photorealistic_cinematic_202510311800_fsh6i1.webm"
-                type="video/webm"
-            />
-            <source
-                src="https://res.cloudinary.com/dnxxtodgb/video/upload/A_photorealistic_cinematic_202510311800_fsh6i1.mp4"
-                type="video/mp4"
+                src="https://res.cloudinary.com/dnxxtodgb/video/upload/A_photorealistic_cinematic_202510311800_fsh6i1"
             />
         </video>
 
