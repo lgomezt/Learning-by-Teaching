@@ -100,3 +100,34 @@ export async function loadProblemsFromDirectory(): Promise<Problem[]> {
     return [];
   }
 }
+
+// Replaces your 'loadProblemsFromDirectory' and 'parseProblemMarkdown'
+export async function loadProblems(): Promise<Problem[]> {
+  try {
+    // Fetch the pre-parsed metadata list from the backend
+    // This endpoint should be public (no token needed, unless you want to restrict it)
+    const response = await fetch('http://localhost:8000/api/problems');
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch problems');
+    }
+
+    // The response IS the list of problems. No parsing needed.
+    const problems: Problem[] = await response.json();
+
+    // You may need to map the keys if your Python model (e.g., 'tags')
+    // doesn't match your TypeScript 'Problem' type (e.g., 'topics')
+    const mappedProblems = problems.map(p => ({
+      ...p,
+      id: p.problem_id.toString(),
+      topics: p.tags,             
+      completed: false,
+    }));
+
+    return mappedProblems;
+
+  } catch (error) {
+    console.error('Error loading problems:', error);
+    return [];
+  }
+}

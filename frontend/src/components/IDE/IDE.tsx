@@ -1,12 +1,12 @@
-// App.tsx
+// IDE.tsx
 import { useState, useEffect } from "react";
 
-import './App.css';
-import LeftPanel from './components/leftpanel';
-import User from './components/user.tsx';
-import { fetchProblem } from './utils/api';
-import { useFiles } from "../context/filecontext.tsx";
-import { type HistoryEvent } from './components/chatbot';
+import './IDE.css';
+import LeftPanel from './leftpanel.tsx';
+import User from './user.tsx';
+import { fetchProblem } from '../../utils/api.ts';
+import { useFiles } from "../../../context/filecontext.tsx";
+import { type HistoryEvent } from './chatbot.tsx';
 
 function App() {
     const { selectedFile } = useFiles();

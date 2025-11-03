@@ -11,3 +11,7 @@ sqlalchemy
 psycopg2-binary
 alembic
 gunicorn
+google-cloud-storage
+python-jose[cryptography]
+pyjwt
+requests

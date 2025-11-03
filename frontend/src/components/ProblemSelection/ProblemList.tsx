@@ -42,9 +42,14 @@ export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicF
 
   if (problems.length === 0) {
     return (
-      <div className="text-center py-16 px-4 bg-slate-800 border border-slate-700 rounded-lg">
-        <h3 className="text-xl font-medium text-white">No Problems Found</h3>
-        <p className="text-slate-400 mt-2">Try adjusting your filters to find more challenges.</p>
+      <div className="text-center py-8 px-4 bg-slate-800 border border-slate-700 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <UploadProblemCard onFileUpload={onNewProblem} />
+          <div className='flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 border-slate-600'>
+            <h3 className="text-xl font-medium text-white">No Problems Found</h3>
+            <p className="text-slate-400 mt-2">Try adjusting your filters to find more challenges.</p>
+          </div>
+        </div>
       </div>
     );
   }

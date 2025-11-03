@@ -22,8 +22,11 @@ services:
     volumes:
       - ./backend:/app
       - ./problems:/app/problems
+      - ./backend/credentials.json:/app/credentials.json:ro
     env_file:
       - .env
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
     depends_on: 
       - db
     ports:

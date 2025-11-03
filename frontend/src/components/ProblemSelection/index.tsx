@@ -11,11 +11,12 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Filters } from './Filters';
 import { ProblemList } from './ProblemList';
 import type { Problem, FiltersState } from './types';
-import { loadProblemsFromDirectory, parseProblemMarkdown } from './utils';
+import { loadProblems } from './utils';
 import LoadingComponent from '../../utils/loadingcomponent';
 
 function ProblemSelection() {
   const { user, isAuthenticated, isLoading } = useAuth0();
+  const { getAccessTokenSilently } = useAuth0();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FiltersState>({
@@ -25,52 +26,37 @@ function ProblemSelection() {
   });
 
   useEffect(() => {
-    // This effect runs when the component mounts or auth state changes.
+    // Define an async function so we can use await
     const initialize = async () => {
-      // Step 1: Sync the user with our database
-      if (isAuthenticated && user) {
-        try {
-          // This is the user-sync logic from before
-          const response = await fetch('http://localhost:8000/api/users/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: user.sub,
-              email: user.email,
-              name: user.name,
-            }),
-          });
-          if (!response.ok) throw new Error('Failed to sync user');
-          const dbUser = await response.json();
-          console.log('User synced successfully:', dbUser);
-        } catch (error) {
-          console.error('Error syncing user:', error);
+      // Only run when Auth0 is no longer loading
+      if (!isLoading) {
+        
+        // Step 1: Sync the user (if they are logged in)
+        if (isAuthenticated && user) {
+          try {
+            const response = await fetch('http://localhost:8000/api/users/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                user_id: user.sub,
+                email: user.email,
+                name: user.name,
+              }),
+            });
+            if (!response.ok) throw new Error('Failed to sync user');
+            console.log('User synced successfully');
+          } catch (error) {
+            console.error('Error syncing user:', error);
+          }
         }
-      }
-    
-    // Step 2: Fetch the PARSED problems from the backend API
-    try {
-        setLoading(true);
-        // const response = await fetch('http://localhost:8000/api/problems');
-        // if (!response.ok) throw new Error('Failed to fetch problems from API');
-        // const loadedProblems = await response.json();
-        // setProblems(loadedProblems.problems || []);
-
-        // TODO: Change this to call the backend instead
-        // We need to fix list_all_problems() to allow the backend find the content for our interface
-        const loadedProblems = await loadProblemsFromDirectory(); 
-        setProblems(loadedProblems)
-      } catch (error) {
-        console.error("Failed to fetch problems:", error);
-      } finally {
-        setLoading(false);
+        
+        // Step 2: Load problems (this happens after user sync)
+        await fetchProblems();
       }
     };
 
-    // Only run this entire process once Auth0 is done loading.
-    if (!isLoading) {
-      initialize();
-    }
+    // Call the async function
+    initialize();
 
   }, [isAuthenticated, user, isLoading]);
 
@@ -82,39 +68,65 @@ function ProblemSelection() {
     return Array.from(topicSet);
   }, [problems]);
 
-  const handleAddNewProblem = (file: File) => {
-    // 1. Create a new FileReader instance
-    const reader = new FileReader();
+  const handleAddNewProblem = async (file: File) => {
+    if (!file) {
+      alert('Please select a file to upload.');
+      return;
+    }
 
-    // 2. Define what happens when the file is successfully read
-    reader.onload = (event) => {
-      // The file content is now available as a string
-      const content = event.target?.result as string;
-      if (!content) {
-        console.error("Could not read file content.");
-        return;
+    try {
+      setLoading(true); 
+
+      // Get the secure token from Auth0
+      const token = await getAccessTokenSilently();
+      
+      console.log("TOKEN:", token);
+      
+      // Create FormData to send the file
+      const formData = new FormData();
+      formData.append('file', file); // The 'file' key must match your FastAPI endpoint
+
+      // POST the file to your new protected endpoint
+      const response = await fetch('http://localhost:8000/api/problems/upload', {
+        method: 'POST',
+        headers: {
+          // DO NOT set 'Content-Type': 'multipart/form-data'
+          // The browser sets it automatically with the correct boundary
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to upload file.');
       }
 
-      // 3. Call your existing parser with the file's name and its content!
-      const newProblem = parseProblemMarkdown(file.name, content);
+      const newProblem = await response.json();
+      console.log('Upload successful', newProblem);
+      alert(`Successfully uploaded problem: ${newProblem.title}`);  
 
-      // 4. If parsing was successful, update the state
-      if (newProblem) {
-        setProblems(currentProblems => [newProblem, ...currentProblems]);
-      } else {
-        // Add feedback for the user if the markdown format is wrong
-        console.error("Failed to parse the markdown file. Check the format.", file.name);
-        alert("Error: The uploaded markdown file could not be parsed. Please check the frontmatter format.");
-      }
-    };
+      // 3. Refresh the list after successful upload
+      await fetchProblems(); // This will re-run the 'loadProblems' function
 
-    // 5. Define what happens if there's an error reading the file
-    reader.onerror = (error) => {
-      console.error("Error reading the file:", error);
-    };
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Upload failed.');
+    } finally {
+      setLoading(false); 
+    }
+  };
 
-    // 6. Start the reading process. This is an asynchronous operation.
-    reader.readAsText(file);
+  const fetchProblems = async () => {
+    setLoading(true);
+    try {
+      const loadedProblems = await loadProblems();
+      setProblems(loadedProblems);
+    } catch (error) {
+      console.error("Failed to fetch problems:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredProblems = useMemo(() => {

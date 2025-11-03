@@ -17,3 +17,11 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create a Base class. Our ORM models will inherit from this class.
 Base = declarative_base()
+
+# Dependency to get the DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

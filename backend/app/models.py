@@ -1,3 +1,4 @@
+import uuid
 import enum
 from sqlalchemy import (
     Column,
@@ -10,57 +11,63 @@ from sqlalchemy import (
     Boolean,
     Table
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, JSON, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .database import Base
 
-# --- User & Problem Models ---
+# ==============================================================================
+# Core Models (User & Problem)
+# ==============================================================================
 
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(String, primary_key=True, index=True)
+    user_id = Column(String, primary_key=True, index=True) # Auth0 ID
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String)
     demographics = Column(JSONB, nullable=True)
 
-    # Relationship to Session
+    # Relationships
     sessions = relationship("Session", back_populates="user")
 
 class Problem(Base):
     __tablename__ = "problems"
 
-    problem_id = Column(Integer, primary_key=True, index=True)
+    problem_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
+    description = Column(Text, nullable=True) # Short description from frontmatter
     difficulty = Column(String)
     author = Column(String)
-    file_path = Column(String, nullable=False)
+    file_path = Column(String, nullable=False, unique=True) # Path to markdown file in GCS
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    tags = Column(JSON, nullable=True)
+    update_log = Column(JSON, nullable=True)
 
-    # Relationships to child tables
+    # Relationships
     sessions = relationship("Session", back_populates="problem")
     milestones = relationship("Milestone", back_populates="problem")
     test_cases = relationship("TestCase", back_populates="problem")
 
 
-# --- Problem Structure Models ---
+# ==============================================================================
+# Problem Structure Models
+# ==============================================================================
 
-# This is the "join table" for the many-to-many relationship
+# Join table for many-to-many relationship between Milestones and TestCases
 milestone_requirements = Table('milestone_requirements', Base.metadata,
-    Column('milestone_id', Integer, ForeignKey('milestones.milestone_id'), primary_key=True),
-    Column('test_case_id', Integer, ForeignKey('test_cases.test_case_id'), primary_key=True)
+    Column('milestone_id', UUID(as_uuid=True), ForeignKey('milestones.milestone_id'), primary_key=True),
+    Column('test_case_id', UUID(as_uuid=True), ForeignKey('test_cases.test_case_id'), primary_key=True)
 )
 
 class Milestone(Base):
     __tablename__ = "milestones"
 
-    milestone_id = Column(Integer, primary_key=True, index=True)
+    milestone_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     description = Column(Text, nullable=False)
     order = Column(Integer, nullable=False)
-    problem_id = Column(Integer, ForeignKey("problems.problem_id"))
+    problem_id = Column(UUID(as_uuid=True), ForeignKey("problems.problem_id"), nullable=False)
 
     # Relationships
     problem = relationship("Problem", back_populates="milestones")
@@ -69,10 +76,10 @@ class Milestone(Base):
 class TestCase(Base):
     __tablename__ = "test_cases"
 
-    test_case_id = Column(Integer, primary_key=True, index=True)
+    test_case_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
     description = Column(Text)
-    problem_id = Column(Integer, ForeignKey("problems.problem_id"))
+    problem_id = Column(UUID(as_uuid=True), ForeignKey("problems.problem_id"), nullable=False)
 
     # Relationships
     problem = relationship("Problem", back_populates="test_cases")
@@ -80,22 +87,24 @@ class TestCase(Base):
     required_for_milestones = relationship("Milestone", secondary=milestone_requirements, back_populates="required_tests")
 
 
-# --- User Activity & Result Models ---
+# ==============================================================================
+# User Activity & Session Models
+# ==============================================================================
 
 class Session(Base):
     __tablename__ = "sessions"
 
-    session_id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    problem_id = Column(UUID(as_uuid=True), ForeignKey("problems.problem_id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
     start_time = Column(DateTime(timezone=True), server_default=func.now())
     end_time = Column(DateTime(timezone=True), nullable=True)
-    user_id = Column(String, ForeignKey("users.user_id"))
-    problem_id = Column(Integer, ForeignKey("problems.problem_id"))
 
     # Relationships
     user = relationship("User", back_populates="sessions")
     problem = relationship("Problem", back_populates="sessions")
-    messages = relationship("SessionMessage", back_populates="session")
-    attempts = relationship("Attempt", back_populates="session")
+    messages = relationship("SessionMessage", back_populates="session", cascade="all, delete-orphan")
+    attempts = relationship("Attempt", back_populates="session", cascade="all, delete-orphan")
 
 class MessageType(enum.Enum):
     CHAT = "CHAT"
@@ -105,39 +114,39 @@ class MessageType(enum.Enum):
 class SessionMessage(Base):
     __tablename__ = "session_messages"
 
-    message_id = Column(Integer, primary_key=True, index=True)
-    sender = Column(String)
+    message_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.session_id"), nullable=False)
+    sender = Column(String) # e.g., "user" or "agent"
     content = Column(Text)
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
     message_type = Column(Enum(MessageType))
-    session_id = Column(Integer, ForeignKey("sessions.session_id"))
 
-    # Relationship
+    # Relationships
     session = relationship("Session", back_populates="messages")
     triggered_attempt = relationship("Attempt", back_populates="triggering_message", uselist=False)
 
 class Attempt(Base):
     __tablename__ = "attempts"
 
-    attempt_id = Column(Integer, primary_key=True, index=True)
+    attempt_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.session_id"))
+    triggering_message_id = Column(UUID(as_uuid=True), ForeignKey("session_messages.message_id"), nullable=True)
     score = Column(Integer)
     time_taken_seconds = Column(Integer)
     submitted_at = Column(DateTime(timezone=True), server_default=func.now())
-    session_id = Column(Integer, ForeignKey("sessions.session_id"))
-    triggering_message_id = Column(Integer, ForeignKey("session_messages.message_id"))
 
     # Relationships
     session = relationship("Session", back_populates="attempts")
     triggering_message = relationship("SessionMessage", back_populates="triggered_attempt")
-    results = relationship("TestCaseResult", back_populates="attempt")
+    results = relationship("TestCaseResult", back_populates="attempt", cascade="all, delete-orphan")
 
 class TestCaseResult(Base):
     __tablename__ = "test_case_results"
 
-    result_id = Column(Integer, primary_key=True, index=True)
+    result_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    attempt_id = Column(UUID(as_uuid=True), ForeignKey("attempts.attempt_id"))
+    test_case_id = Column(UUID(as_uuid=True), ForeignKey("test_cases.test_case_id"))
     passed = Column(Boolean)
-    attempt_id = Column(Integer, ForeignKey("attempts.attempt_id"))
-    test_case_id = Column(Integer, ForeignKey("test_cases.test_case_id"))
 
     # Relationships
     attempt = relationship("Attempt", back_populates="results")

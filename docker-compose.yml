@@ -11,9 +11,16 @@ services:
     build:
       context: . # Use root folder as context
       dockerfile: ./backend/Dockerfile # Path to the Dockerfile
-    # REMOVED: All volumes for code or static problems
     env_file:
       - .env
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+    # Mount the local credential file into the container
+    volumes:
+      # - [HOST_PATH]:[CONTAINER_PATH]:ro
+      # This makes your local credentials.json file appear at /app/credentials.json
+      # The ":ro" makes it read-only inside the container for extra security.
+      - ./backend/credentials.json:/app/credentials.json:ro
     depends_on:
       - db
     restart: always

@@ -1,28 +1,48 @@
-from fastapi import FastAPI, Request, UploadFile, File
+import os
+from fastapi import FastAPI, Request, UploadFile, File, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from google import genai
 
+# --- Import ALL your routers ---
 from .routers import users
+from .routers import problems 
+
+from .database import Base, engine
+from . import models
 
 # Importing utility functions
 from .utils.agent_tools.openai_agent import Agent
 from .utils.agent_tools.gemini_agent import get_agent_code, get_agent_response, routing_agent
-from .utils.parse_problem import load_problem_from_file, load_problem, list_all_problems
+
+# TEMPORARY. Just for the Chat endpoint while we move it
+router = APIRouter(
+    prefix="/api", 
+    tags=["Chat"]
+)
+
+# This command tells SQLAlchemy to create all tables defined in your models
+# (that inherit from Base) in the database. It only creates tables 
+# that do not already exist, so it's safe to run every time.
+models.Base.metadata.create_all(bind = engine)
 
 app = FastAPI()
+
+# --- Include Routers ---
 app.include_router(users.router, prefix="/api")
+app.include_router(problems.router)
 
 load_dotenv()
 
+# --- AI Client Setup (Will move to chat router) ---
 client_openai = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 client_gemini = genai.Client(api_key = os.environ.get("GEMINI_API_KEY"))
 agent = Agent(openai_client = client_openai)
 
+# --- Middleware ---
 # Allow frontend to call backend
 app.add_middleware(
     CORSMiddleware,
@@ -32,21 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load one problem
-@app.get("/api/problems/{problem_id}")
-def get_problem(problem_id: str):
-    print(f"API called with problem_id: {problem_id}")
-    problem = load_problem(problem_id)
-    if not problem:
-        return {"error": "Problem not found"}
-    return problem
-
-# List problems
-@app.get("/api/problems")
-def list_problems():
-    return list_all_problems()
-
-# AI Agent
+# --- AI Agent (Will move to chat router) ---
 @app.post("/api/chat")
 async def chat_endpoint(request: Request):
     try:
@@ -120,12 +126,7 @@ async def chat_endpoint(request: Request):
         print("Agent error:", e)
         return JSONResponse(status_code=500, content={"error": "Agent processing failed"})
 
-@app.post("/api/upload")
-async def upload_problem(file: UploadFile = File(...)):
-    try:
-        # read the file content manually, because load_problem_from_file expects it
-        content = await file.read()
-        return load_problem_from_file(content.decode("utf-8"))
-    except Exception as e:
-        print("Error parsing uploaded file:", e)
-        return JSONResponse(status_code=400, content={"error": "Invalid file"})
+# Root endpoint
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to the API!"}
