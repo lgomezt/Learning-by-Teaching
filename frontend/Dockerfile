@@ -14,6 +14,14 @@ RUN npm ci
 # Copy the rest of the frontend source code from the frontend subdir
 COPY frontend/ .
 
+ARG VITE_AUTH0_DOMAIN
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_AUTH0_AUDIENCE
+
+ENV VITE_AUTH0_DOMAIN=$VITE_AUTH0_DOMAIN
+ENV VITE_AUTH0_CLIENT_ID=$VITE_AUTH0_CLIENT_ID
+ENV VITE_AUTH0_AUDIENCE=$VITE_AUTH0_AUDIENCE
+
 RUN npm run build
 
 # --- Stage 2: The "Server" ---
