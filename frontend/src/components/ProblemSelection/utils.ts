@@ -115,12 +115,10 @@ export async function loadProblems(): Promise<Problem[]> {
     // The response IS the list of problems. No parsing needed.
     const problems: Problem[] = await response.json();
 
-    // You may need to map the keys if your Python model (e.g., 'tags')
-    // doesn't match your TypeScript 'Problem' type (e.g., 'topics')
     const mappedProblems = problems.map(p => ({
       ...p,
-      id: p.problem_id.toString(),
-      topics: p.tags,             
+      id: p.id.toString(),
+      topics: p.topics,             
       completed: false,
     }));
 

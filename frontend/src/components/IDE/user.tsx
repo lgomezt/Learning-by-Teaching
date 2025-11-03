@@ -1,7 +1,7 @@
 // user.tsx
 import { useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import UserOutput from "./useroutput";
+import UserOutput from "./useroutput.tsx";
 import { FaUser, FaRobot } from 'react-icons/fa';
 import { diffChars } from 'diff';
 
