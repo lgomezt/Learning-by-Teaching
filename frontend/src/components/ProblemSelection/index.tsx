@@ -62,7 +62,7 @@ function ProblemSelection() {
   const availableTopics = useMemo(() => {
     const topicSet = new Set<string>();
     problems.forEach(problem => {
-      problem.topics?.forEach(topic => topicSet.add(topic));
+      problem.tags?.forEach(topic => topicSet.add(topic));
     });
     return Array.from(topicSet);
   }, [problems]);
@@ -134,7 +134,7 @@ function ProblemSelection() {
         filters.difficulty === 'All' || problem.difficulty === filters.difficulty;
       const topicMatch =
         filters.topic.includes('All') ||
-        problem.topics?.some(topic => filters.topic.includes(topic));
+        problem.tags?.some(topic => filters.topic.includes(topic));
       return statusMatch && difficultyMatch && topicMatch;
     });
   }, [filters, problems]);

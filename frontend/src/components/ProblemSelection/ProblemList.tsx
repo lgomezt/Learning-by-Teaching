@@ -17,7 +17,7 @@ export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicF
     if (activeTopicFilter.includes('All')) {
       // If 'All' is selected, group all filtered problems by their first topic
       problems.forEach(problem => {
-        const mainTopic = problem.topics[0] || 'Uncategorized';
+        const mainTopic = problem.tags[0] || 'Uncategorized';
         if (!groups[mainTopic]) {
           groups[mainTopic] = [];
         }
@@ -29,7 +29,7 @@ export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicF
     // If specific topics are selected, create a group for each selected topic
     // that has matching problems.
     activeTopicFilter.forEach(topic => {
-      const problemsInTopic = problems.filter(p => p.topics.includes(topic));
+      const problemsInTopic = problems.filter(p => p.tags.includes(topic));
       if (problemsInTopic.length > 0) {
         groups[topic] = problemsInTopic;
       }
@@ -70,7 +70,7 @@ export const ProblemList: React.FC<ProblemListProps> = ({ problems, activeTopicF
 
             {/* The existing logic to map over problems remains the same */}
             {groupedProblems[topic].map((problem) => (
-              <ProblemCard key={problem.id} problem={problem} />
+              <ProblemCard key={problem.problem_id} problem={problem} />
             ))}
           </div>
         </section>
