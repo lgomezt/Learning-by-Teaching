@@ -44,7 +44,6 @@ function ProblemSelection() {
               }),
             });
             if (!response.ok) throw new Error('Failed to sync user');
-            console.log('User synced successfully');
           } catch (error) {
             console.error('Error syncing user:', error);
           }
@@ -80,8 +79,6 @@ function ProblemSelection() {
       // Get the secure token from Auth0
       const token = await getAccessTokenSilently();
       
-      console.log("TOKEN:", token);
-      
       // Create FormData to send the file
       const formData = new FormData();
       formData.append('file', file); // The 'file' key must match your FastAPI endpoint
@@ -103,7 +100,6 @@ function ProblemSelection() {
       }
 
       const newProblem = await response.json();
-      console.log('Upload successful', newProblem);
       alert(`Successfully uploaded problem: ${newProblem.title}`);  
 
       // 3. Refresh the list after successful upload

@@ -17,12 +17,12 @@ const difficultyStyles: Record<Difficulty, string> = {
 };
 
 export const ProblemCard: React.FC<ProblemCardProps> = ({ problem }) => {
-  const { title, description, difficulty, topics, completed } = problem;
+  const { title, description, difficulty, tags, completed } = problem;
   const navigate = useNavigate();
   const { setSelectedFile } = useFiles();
 
   const handleClick = () => {
-    setSelectedFile(problem.fileName);
+    setSelectedFile(problem.problem_id);
     navigate('/ide');
   };
 
@@ -55,7 +55,7 @@ export const ProblemCard: React.FC<ProblemCardProps> = ({ problem }) => {
 
         <div className="flex flex-wrap gap-2 items-center">
             <CodeBracketIcon className="h-5 w-5 text-slate-400 mr-1" />
-            {topics.map((topic) => (
+            {tags.map((topic) => (
                 <span
                     key={topic}
                     className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-700 text-slate-300"

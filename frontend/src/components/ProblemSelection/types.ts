@@ -1,11 +1,11 @@
 export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 export interface Problem {
-  id: string;
+  problem_id: string;
   title: string;
   description: string;
   difficulty: Difficulty;
-  topics: string[];
+  tags: string[];
   completed: boolean;
   fileName: string;
 }

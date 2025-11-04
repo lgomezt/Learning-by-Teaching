@@ -59,14 +59,14 @@ export function parseProblemMarkdown(fileName: string, content: string): Problem
         difficulty = 'Medium'; // <-- Correct
     }
 
-    const id = fileName.replace('.md', '');
+    const problem_id = fileName.replace('.md', '');
 
     return {
-      id,
+      problem_id,
       title: metadata.title,
       description: metadata.description,
       difficulty,
-      topics: metadata.tags,
+      tags: metadata.tags,
       completed: false, // TODO: Track completion status
       fileName,
     };
@@ -115,12 +115,14 @@ export async function loadProblems(): Promise<Problem[]> {
     // The response IS the list of problems. No parsing needed.
     const problems: Problem[] = await response.json();
 
-    const mappedProblems = problems.map(p => ({
+    const mappedProblems = problems.map(p => {
+      return {
       ...p,
-      id: p.id.toString(),
-      topics: p.topics,             
+      id: p.problem_id.toString(),
+      topics: p.tags,             
       completed: false,
-    }));
+      };
+    });
 
     return mappedProblems;
 

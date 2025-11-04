@@ -161,8 +161,8 @@ function App() {
     useEffect(() => {
         async function loadProblem() {
             if (selectedFile != null) {
-                const problem = await fetchProblem(selectedFile);
-                // console.log("Loaded problem:", problem);              
+                const problem = await fetchProblem(selectedFile);  
+                console.log("problem", problem)        
                 const agentInit = problem.agent_code || "";
                 const userInit = problem.user_code || "";
 

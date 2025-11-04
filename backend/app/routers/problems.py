@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 
+from app.utils.parse_problem import parse_problem_content
+
 from google.cloud import storage
 from google.api_core import exceptions
 
@@ -162,13 +164,27 @@ async def get_single_problem_details(
         # 3. Separate frontmatter from the main content
         post = frontmatter.loads(markdown_content)
 
-        # Convert the SQLAlchemy model to a Pydantic-compatible dict
-        response_data = schemas.Problem.model_validate(problem_db).model_dump()
-        
-        # Add the one extra field that ProblemDetail schema requires
-        response_data['markdown_content'] = post.content
-        
-        return response_data
+        # 4. Call your parser with the content and metadata
+        #    This returns a dict with all your parsed fields
+        parsed_data = parse_problem_content(post.content, post.metadata)
+
+        # 5. Get the base data from the DB model
+        #    (Using the 'Problem' schema we assumed you have)
+        db_data = schemas.Problem.model_validate(problem_db).model_dump()
+
+        # 6. Combine the two dictionaries
+        #    Start with DB data, then add/overwrite with parsed data
+        final_data_dict = {**db_data, **parsed_data}
+
+        # 7. Validate the final flat object against the response schema
+        #    This ensures the data is correct before sending
+        try:
+            final_response = schemas.ProblemDetail.model_validate(final_data_dict)
+            return final_response
+        except Exception as validation_error:
+            # This is for debugging schema mismatches
+            print(f"FINAL RESPONSE VALIDATION FAILED: {validation_error}")
+            raise HTTPException(500, detail=f"Response validation error: {validation_error}")
         
     except exceptions.NotFound:
         raise HTTPException(status_code=404, detail=f"File not found in GCS for problem {problem_id}")

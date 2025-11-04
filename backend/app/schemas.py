@@ -41,7 +41,18 @@ class Problem(ProblemBase):
     class Config:
         from_attributes = True
 
+class Milestone(BaseModel):
+    number: int
+    content: str
+
 # This is for the response of the single problem endpoint
-class ProblemDetail(BaseModel):
-    metadata: Problem
-    markdown_content: str
+class ProblemDetail(Problem):
+    description_meta: str
+    problem_statement: str
+    lesson_goals: List[str]
+    common_mistakes: List[str]
+    description_block: str
+    milestones: List[Milestone]
+    example_output: str
+    agent_code: str
+    user_code: str

@@ -2,9 +2,8 @@
 export async function fetchProblem(file: File | string) {
   // If file is a string (problem filename), fetch from the backend
   if (typeof file === 'string') {
-    const problemId = file.replace('.md', '');
-    const res = await fetch(`http://localhost:8000/api/problems/${problemId}`);
-
+    const res = await fetch(`http://localhost:8000/api/problems/${file}`);
+    console.log(res)
     if (!res.ok) {
       throw new Error(`Failed to load problem: ${res.statusText}`);
     }
