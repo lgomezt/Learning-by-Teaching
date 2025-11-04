@@ -29,3 +29,4 @@ credentials.json
 # Cache
 */__pycache__/*
 backend/utils/__pycache__/*
+frontend/.env.development
