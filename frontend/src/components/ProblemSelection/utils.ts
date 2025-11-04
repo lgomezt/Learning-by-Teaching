@@ -1,5 +1,7 @@
 import type { Problem, Difficulty } from './types';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 interface ProblemMetadata {
   title: string;
   description: string;
@@ -79,7 +81,7 @@ export function parseProblemMarkdown(fileName: string, content: string): Problem
 export async function loadProblemsFromDirectory(): Promise<Problem[]> {
   try {
     // Fetch the list of problem files from the backend
-    const response = await fetch('http://localhost:8000/api/problems');
+    const response = await fetch(`${API_BASE_URL}/problems`);
     if (!response.ok) {
       throw new Error('Failed to fetch problems');
     }
@@ -106,7 +108,7 @@ export async function loadProblems(): Promise<Problem[]> {
   try {
     // Fetch the pre-parsed metadata list from the backend
     // This endpoint should be public (no token needed, unless you want to restrict it)
-    const response = await fetch('http://localhost:8000/api/problems');
+    const response = await fetch('${API_BASE_URL}/problems');
     
     if (!response.ok) {
       throw new Error('Failed to fetch problems');

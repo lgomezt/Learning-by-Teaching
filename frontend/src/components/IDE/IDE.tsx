@@ -8,6 +8,8 @@ import { fetchProblem } from '../../utils/api.ts';
 import { useFiles } from "../../../context/filecontext.tsx";
 import { type HistoryEvent } from './chatbot.tsx';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 function App() {
     const { selectedFile } = useFiles();
 
@@ -121,7 +123,7 @@ function App() {
 
         // NOW perform the side effect (API call) completely separate from the state setter.
             try {
-                const res = await fetch("http://localhost:8000/api/chat", {
+                const res = await fetch(`${API_BASE_URL}/chat`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

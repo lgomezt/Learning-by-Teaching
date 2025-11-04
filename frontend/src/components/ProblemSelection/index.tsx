@@ -14,6 +14,8 @@ import type { Problem, FiltersState } from './types';
 import { loadProblems } from './utils';
 import LoadingComponent from '../../utils/loadingcomponent';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 function ProblemSelection() {
   const { user, isAuthenticated, isLoading } = useAuth0();
   const { getAccessTokenSilently } = useAuth0();
@@ -34,7 +36,7 @@ function ProblemSelection() {
         // Step 1: Sync the user (if they are logged in)
         if (isAuthenticated && user) {
           try {
-            const response = await fetch('http://localhost:8000/api/users/', {
+            const response = await fetch(`${API_BASE_URL}/users/`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -84,7 +86,7 @@ function ProblemSelection() {
       formData.append('file', file); // The 'file' key must match your FastAPI endpoint
 
       // POST the file to your new protected endpoint
-      const response = await fetch('http://localhost:8000/api/problems/upload', {
+      const response = await fetch(`${API_BASE_URL}/problems/upload`, {
         method: 'POST',
         headers: {
           // DO NOT set 'Content-Type': 'multipart/form-data'
