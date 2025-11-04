@@ -86,7 +86,8 @@ function ProblemSelection() {
       formData.append('file', file); // The 'file' key must match your FastAPI endpoint
 
       // POST the file to your new protected endpoint
-      const response = await fetch(`${API_BASE_URL}/problems/upload`, {
+      const response = await fetch(`${API_BASE_URL}/upload`, {
+      //const response = await fetch(`${API_BASE_URL}/problems/upload`, {
         method: 'POST',
         headers: {
           // DO NOT set 'Content-Type': 'multipart/form-data'

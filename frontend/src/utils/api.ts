@@ -19,7 +19,7 @@ export async function fetchProblem(file: File | string) {
   const formData = new FormData();
   formData.append("file", file); // key MUST match 'file' in FastAPI
 
-  const res = await fetch("${API_BASE_URL}/upload", {
+  const res = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     body: formData,
   });
