@@ -17,32 +17,30 @@ services:
     build:
       context: . # Use root folder as context
       dockerfile: ./backend/Dockerfile # Path to the Dockerfile
-    env_file:
-      - .env
     environment:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
-    # Mount the local credential file into the container
-    volumes:
-      # - [HOST_PATH]:[CONTAINER_PATH]:ro
-      # This makes your local credentials.json file appear at /app/credentials.json
-      # The ":ro" makes it read-only inside the container for extra security.
-      - ./backend/credentials.json:/app/credentials.json:ro
+
+      # --- These variables are now read by your new python config ---
+      - DB_HOST=cloud-sql-proxy  # <-- CRITICAL: This MUST match the proxy service name
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      
     depends_on:
-      - db
+      - cloud-sql-proxy
     restart: always
 
-  db:
-    image: postgres:15-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
+  cloud-sql-proxy:
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
+    command:
+      # These flags tell the proxy to listen on port 5432
+      # and use the credentials file Coolify will inject.
+      - "--port=5432"
+      - "--credentials-file=/app/credentials.json"
+      # This variable will be set in Coolify with your instance name
+      - "${DB_INSTANCE_CONNECTION_NAME}"
+    environment:
+      # This path must match the one in the backend service
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
     restart: always
-
-  adminer:
-    image: adminer
-    restart: always
-
-# Define only the volume for persistent data
-volumes:
-  postgres_data:

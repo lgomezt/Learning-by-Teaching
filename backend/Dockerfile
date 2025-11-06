@@ -12,8 +12,6 @@ RUN pip install -r requirements.txt
 # Copy the backend source code from the backend subdir
 COPY backend/ .
 
-# # Copy the problems directory from the root!
-# COPY problems/ ./problems/
 
 EXPOSE 8000
 CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]
