@@ -36,7 +36,7 @@ function ProblemSelection() {
         // Step 1: Sync the user (if they are logged in)
         if (isAuthenticated && user) {
           try {
-            const response = await fetch(`${API_BASE_URL}/users/`, {
+            const response = await fetch(`${API_BASE_URL}/api/users/`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
