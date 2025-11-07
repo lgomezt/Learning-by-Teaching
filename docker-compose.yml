@@ -26,7 +26,10 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      
+    
+    volumes:
+      - /data/coolify/secrets/credentials.json:/app/credentials.json:ro
+
     depends_on:
       - cloud-sql-proxy
     restart: always
@@ -43,4 +46,8 @@ services:
     environment:
       # This path must match the one in the backend service
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+
+    volumes:
+      - /data/coolify/secrets/credentials.json:/app/credentials.json:ro
+
     restart: always
