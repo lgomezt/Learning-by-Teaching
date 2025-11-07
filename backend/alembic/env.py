@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -8,6 +9,13 @@ from alembic import context
 import sys
 from os.path import abspath, dirname
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
+
+DB_USER = os.environ["POSTGRES_USER"]
+DB_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+DB_NAME = os.environ["POSTGRES_DB"]
+DB_HOST = os.environ.get("DB_HOST", "db")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -62,6 +70,9 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+
+    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -73,7 +84,7 @@ def run_migrations_online() -> None:
             connection=connection, target_metadata=target_metadata
         )
 
-        with context.begin_transaction():
+        with context.begin_transaction(): 
             context.run_migrations()
 
 
