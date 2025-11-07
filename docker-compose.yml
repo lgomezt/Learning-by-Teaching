@@ -37,6 +37,7 @@ services:
   cloud-sql-proxy:
     image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
     command:
+      - "--address=0.0.0.0"
       # These flags tell the proxy to listen on port 5432
       # and use the credentials file Coolify will inject.
       - "--port=5432"
