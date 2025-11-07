@@ -1,15 +1,19 @@
 #!/bin/sh
 
-# This script runs database migrations and then starts the main application.
-
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-echo "Running database migrations..."
-# This command runs your Alembic migrations
-alembic upgrade head
-echo "Migrations complete."
+echo "--- Entrypoint Script ---"
+echo "Waiting for database to be ready..."
 
-# Now, execute the main command (what was passed as CMD in the Dockerfile)
-# This will be your "uvicorn app.main:app ..." or "gunicorn ..." command
+# Run the python wait script
+# (This file was copied into /app by your Dockerfile's 'COPY backend/ .')
+python /app/wait_for_db.py
+
+echo "Database is ready. Running migrations..."
+alembic upgrade head
+echo "✅ Migrations complete."
+
+echo "Starting Gunicorn server..."
+# Now, execute the main command (the Gunicorn CMD from your Dockerfile)
 exec "$@"
