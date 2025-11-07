@@ -24,11 +24,6 @@ router = APIRouter(
     tags=["Chat"]
 )
 
-# This command tells SQLAlchemy to create all tables defined in your models
-# (that inherit from Base) in the database. It only creates tables 
-# that do not already exist, so it's safe to run every time.
-models.Base.metadata.create_all(bind = engine)
-
 app = FastAPI()
 
 # --- Include Routers ---
