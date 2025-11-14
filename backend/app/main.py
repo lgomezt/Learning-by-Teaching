@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from dotenv import load_dotenv
-from openai import OpenAI
 from google import genai
 
 # --- Import ALL your routers ---
@@ -33,9 +32,7 @@ app.include_router(problems.router)
 load_dotenv()
 
 # --- AI Client Setup (Will move to chat router) ---
-client_openai = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 client_gemini = genai.Client(api_key = os.environ.get("GEMINI_API_KEY"))
-agent = Agent(openai_client = client_openai)
 
 # --- Middleware ---
 # Allow frontend to call backend
@@ -108,18 +105,6 @@ async def chat_endpoint(request: Request):
                                             model_name = "gemini-2.5-pro",
                                             thinking_budget = 128, # -1
                                             temperature = 0.7)
-
-        # OpenAI Agent
-        # assistant_response = agent.agent_respond(
-        #     user_message=user_message,
-        #     chat_history=chat_history,
-        #     user_code_t0=user_code_t0,
-        #     user_code_t1=user_code_t1,
-        #     agent_code_t0=agent_code_t0,
-        #     agent_code_t1=agent_code_t1,
-        #     problem_statement=problem_statement,
-        #     model="gpt-4.1-mini", # A cheap model for testing purposes
-        # )
 
         return {
             "author": "agent",
