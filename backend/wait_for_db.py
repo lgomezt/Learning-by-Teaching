@@ -81,7 +81,7 @@ try:
                 if "cloud-sql-proxy" in DB_HOST:
                     print("   - If using CloudSQL, verify cloud-sql-proxy is running and connected")
                 sys.exit(1)  # Failure
-            
+
 except KeyError as e:
     print(f"❌ Missing required environment variable: {e}")
     print("   Required variables: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB")

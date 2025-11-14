@@ -81,7 +81,7 @@ export function parseProblemMarkdown(fileName: string, content: string): Problem
 export async function loadProblemsFromDirectory(): Promise<Problem[]> {
   try {
     // Fetch the list of problem files from the backend
-    const response = await fetch(`${API_BASE_URL}/problems`);
+    const response = await fetch(`${API_BASE_URL}/problems/`);
     if (!response.ok) {
       throw new Error('Failed to fetch problems');
     }
@@ -108,7 +108,7 @@ export async function loadProblems(): Promise<Problem[]> {
   try {
     // Fetch the pre-parsed metadata list from the backend
     // This endpoint should be public (no token needed, unless you want to restrict it)
-    const response = await fetch(`${API_BASE_URL}/problems`);
+    const response = await fetch(`${API_BASE_URL}/problems/`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch problems');
