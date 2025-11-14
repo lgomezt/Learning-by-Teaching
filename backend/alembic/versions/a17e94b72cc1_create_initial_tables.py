@@ -18,6 +18,11 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+message_type_enum = postgresql.ENUM(
+    'CHAT', 'CODE', 'OUTPUT', name='messagetype', create_type=False
+)
+
+
 def upgrade() -> None:
     """Upgrade schema."""
     # Create enum type for MessageType if it does not already exist
@@ -104,7 +109,7 @@ def upgrade() -> None:
     sa.Column('sender', sa.String(), nullable=True),
     sa.Column('content', sa.Text(), nullable=True),
     sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.Column('message_type', postgresql.ENUM('CHAT', 'CODE', 'OUTPUT', name='messagetype'), nullable=True),
+    sa.Column('message_type', message_type_enum, nullable=True),
     sa.ForeignKeyConstraint(['session_id'], ['sessions.session_id'], ),
     sa.PrimaryKeyConstraint('message_id')
     )
