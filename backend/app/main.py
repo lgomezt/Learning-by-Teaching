@@ -39,9 +39,19 @@ agent = Agent(openai_client = client_openai)
 
 # --- Middleware ---
 # Allow frontend to call backend
+# In production, set CORS_ORIGINS environment variable with comma-separated origins
+# Example: CORS_ORIGINS=https://example.com,https://www.example.com
+# In development, defaults to "*" to allow all origins
+cors_origins_env = os.getenv("CORS_ORIGINS", "*")
+if cors_origins_env == "*":
+    allow_origins = ["*"]
+else:
+    # Split comma-separated origins and strip whitespace
+    allow_origins = [origin.strip() for origin in cors_origins_env.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # for dev
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
