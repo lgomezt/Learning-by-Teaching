@@ -108,14 +108,20 @@ export async function loadProblems(): Promise<Problem[]> {
   try {
     // Fetch the pre-parsed metadata list from the backend
     // This endpoint should be public (no token needed, unless you want to restrict it)
-    const response = await fetch(`${API_BASE_URL}/problems/`);
+    const url = `${API_BASE_URL}/problems/`;
+    console.log('Fetching problems from:', url); // Debug logging
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch problems');
+      const errorText = await response.text();
+      console.error(`Failed to fetch problems: ${response.status} ${response.statusText}`, errorText);
+      throw new Error(`Failed to fetch problems: ${response.status} ${response.statusText}`);
     }
 
     // The response IS the list of problems. No parsing needed.
     const problems: Problem[] = await response.json();
+    console.log(`Loaded ${problems.length} problems from API`); // Debug logging
 
     const mappedProblems = problems.map(p => {
       return {

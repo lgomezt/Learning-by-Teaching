@@ -132,8 +132,13 @@ async def list_problems(db: Session = Depends(get_db)):
     This is a fast, public endpoint that does NOT hit GCS.
     Used to populate the main problem selection page.
     """
-    problems = db.query(models.Problem).all()
-    return problems
+    try:
+        problems = db.query(models.Problem).all()
+        print(f"Found {len(problems)} problems in database")  # Debug logging
+        return problems
+    except Exception as e:
+        print(f"Error querying problems from database: {e}")  # Debug logging
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.get("/{problem_id}", response_model=schemas.ProblemDetail)
