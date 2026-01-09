@@ -34,7 +34,7 @@ The easiest way to run the application is using Docker Compose. This ensures con
 
 1. **Clone the repository** (if you haven't already)
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/lgomezt/Learning-by-Teaching.git
    cd "Learning by Teaching"
    ```
 
