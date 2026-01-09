@@ -1,4 +1,4 @@
-# Protégé: Learn by Teaching
+# Protégé
 
 A Teachable Agent (TA) platform where an AI acts as a peer student who must be taught by the user. This prototype leverages the **Protégé Effect** and **Learning by Teaching** principles to enhance learning outcomes.
 
