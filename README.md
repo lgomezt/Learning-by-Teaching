@@ -1,4 +1,4 @@
-# Protégé: Learn by Teaching
+# Protégé
 
 A Teachable Agent (TA) platform where an AI acts as a peer student who must be taught by the user. This prototype leverages the **Protégé Effect** and **Learning by Teaching** principles to enhance learning outcomes.
 
@@ -34,7 +34,7 @@ The easiest way to run the application is using Docker Compose. This ensures con
 
 1. **Clone the repository** (if you haven't already)
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/lgomezt/Learning-by-Teaching.git
    cd "Learning by Teaching"
    ```
 
@@ -57,14 +57,14 @@ The easiest way to run the application is using Docker Compose. This ensures con
    
    From the project root:
    ```bash
-   docker-compose up --build
+   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
    ```
    
    The first time this runs, it will:
    - Build the backend Docker image (Python 3.11 + dependencies)
    - Build the frontend Docker image (Node.js + React build)
    - Start both services
-   - Make the app available at [http://localhost:5173](http://localhost:5173)
+   - Make the app available at [http://localhost:5174](http://localhost:5174)
 
 4. **Access the application**
    
