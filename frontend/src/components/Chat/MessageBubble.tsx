@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { User } from 'lucide-react';
 import type { Message } from '../../context/AppContext';
-import { STRATEGIES } from '../../config/pedagogy';
+import { useChat } from '../../context/AppContext';
+import { getStrategyById, DEFAULT_STRATEGY } from '../../config/pedagogy';
 
 interface MessageBubbleProps {
   message: Message;
   isStreaming?: boolean;
+  isLastAlexMessage?: boolean;
 }
 
 // Generate typing delay using normal distribution
@@ -20,11 +22,12 @@ function getTypingDelay(): number {
 }
 
 // Component for character-by-character typing animation
-function TypedText({ text, isNew }: { text: string; isNew: boolean }) {
+function TypedText({ text, isNew, onAnimationComplete }: { text: string; isNew: boolean; onAnimationComplete?: () => void }) {
   const [revealedLength, setRevealedLength] = useState(0);
   // Track if we should animate - once set to false (old message), never animate
   const shouldAnimateRef = useRef(isNew);
   const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasNotifiedRef = useRef(false);
 
   // Animation effect - runs whenever we need to reveal more characters
   useEffect(() => {
@@ -46,6 +49,18 @@ function TypedText({ text, isNew }: { text: string; isNew: boolean }) {
       animationTimeoutRef.current = setTimeout(() => {
         setRevealedLength(prev => prev + 1);
       }, delay);
+    } else if (revealedLength >= text.length && text.length > 0 && !hasNotifiedRef.current && onAnimationComplete) {
+      // Animation complete - only when there's actual content (text.length > 0)
+      hasNotifiedRef.current = true;
+      // Small delay to ensure the last character is rendered
+      setTimeout(() => {
+        onAnimationComplete();
+      }, 50);
+    }
+    
+    // Reset hasNotifiedRef if text was empty but now has content (content arrived after initial empty state)
+    if (text.length > 0 && hasNotifiedRef.current && revealedLength < text.length) {
+      hasNotifiedRef.current = false;
     }
 
     return () => {
@@ -53,7 +68,7 @@ function TypedText({ text, isNew }: { text: string; isNew: boolean }) {
         clearTimeout(animationTimeoutRef.current);
       }
     };
-  }, [text.length, revealedLength]);
+  }, [text.length, revealedLength, onAnimationComplete]);
 
   const revealedText = text.slice(0, revealedLength);
   // Show cursor when animating (including when empty/waiting for text)
@@ -78,8 +93,9 @@ function TypedText({ text, isNew }: { text: string; isNew: boolean }) {
   );
 }
 
-export function MessageBubble({ message, isStreaming = false }: MessageBubbleProps) {
+export function MessageBubble({ message, isStreaming = false, isLastAlexMessage = false }: MessageBubbleProps) {
   const isAlex = message.role === 'alex';
+  const { setIsAnimating } = useChat();
   
   // Determine if this is a "new" message that should be animated
   // A message is new if it's streaming OR was created very recently (within 500ms)
@@ -87,10 +103,17 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
   const messageAgeMs = Date.now() - message.timestamp.getTime();
   const isNewMessage = isStreaming || messageAgeMs < 500;
   
-  // Find strategy label if available
-  const strategyLabel = message.strategyId 
-    ? Object.values(STRATEGIES).find(s => s.id === message.strategyId)?.label
+  // Get strategy for Alex messages (fallback to default if not found)
+  const strategy = isAlex && message.strategyId 
+    ? (getStrategyById(message.strategyId) || DEFAULT_STRATEGY)
     : null;
+
+  // Handle animation completion - only for the last Alex message
+  const handleAnimationComplete = () => {
+    if (isLastAlexMessage && isAlex) {
+      setIsAnimating(false);
+    }
+  };
 
   return (
     <motion.div
@@ -123,12 +146,12 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
           <span 
             className="px-2 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider"
             style={{
-              backgroundColor: isAlex ? 'rgba(217, 119, 87, 0.15)' : '#2d5a4d',
-              color: isAlex ? '#d97757' : '#ffffff',
+              backgroundColor: isAlex && strategy ? strategy.color : (isAlex ? 'rgba(217, 119, 87, 0.15)' : '#2d5a4d'),
+              color: isAlex && strategy ? '#ffffff' : (isAlex ? '#d97757' : '#ffffff'),
               letterSpacing: '0.06em'
             }}
           >
-            {isAlex ? 'STUDENT' : 'TEACHER'}
+            {isAlex ? (strategy ? strategy.label : 'STUDENT') : 'TEACHER'}
           </span>
         </div>
 
@@ -140,7 +163,11 @@ export function MessageBubble({ message, isStreaming = false }: MessageBubblePro
               className="text-base leading-[1.7] whitespace-pre-wrap"
               style={{ color: '#1a1a1a' }}
             >
-              <TypedText text={message.content} isNew={isNewMessage} />
+              <TypedText 
+                text={message.content} 
+                isNew={isNewMessage} 
+                onAnimationComplete={isLastAlexMessage ? handleAnimationComplete : undefined}
+              />
             </p>
             <div 
               className="mt-1.5 text-xs"

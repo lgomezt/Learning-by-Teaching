@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { Brain, HelpCircle, ListOrdered, Lightbulb, Check } from 'lucide-react';
+import { Brain, HelpCircle, ListOrdered, Lightbulb, Check, CheckSquare2 } from 'lucide-react';
 import type { Strategy } from '../../config/pedagogy';
 
 interface StrategyCardProps {
   strategy: Strategy;
   isActive: boolean;
   onClick: () => void;
+  disabled?: boolean;
 }
 
 const iconMap = {
@@ -13,23 +14,27 @@ const iconMap = {
   'help-circle': HelpCircle,
   'list-ordered': ListOrdered,
   'lightbulb': Lightbulb,
+  'check-square': CheckSquare2,
 };
 
-export function StrategyCard({ strategy, isActive, onClick }: StrategyCardProps) {
+export function StrategyCard({ strategy, isActive, onClick, disabled = false }: StrategyCardProps) {
   const Icon = iconMap[strategy.icon];
 
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      disabled={disabled}
+      whileHover={disabled ? {} : { scale: 1.02 }}
+      whileTap={disabled ? {} : { scale: 0.98 }}
       animate={{
         borderColor: isActive ? 'var(--color-sage-400)' : 'transparent',
         backgroundColor: isActive ? 'var(--color-sage-50)' : 'white',
+        opacity: disabled ? 0.5 : 1,
       }}
       className={`
         w-full text-left p-4 rounded-xl border-2 transition-shadow
         ${isActive ? 'shadow-md' : 'shadow-sm hover:shadow-md'}
+        ${disabled ? 'cursor-not-allowed' : ''}
       `}
     >
       <div className="flex items-start gap-3">

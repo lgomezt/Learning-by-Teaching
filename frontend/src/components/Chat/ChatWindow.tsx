@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Upload } from 'lucide-react';
 import { useChat, useDocument, useStrategy } from '../../context/AppContext';
+import type { Message } from '../../context/AppContext';
 import { useTeachableAgent } from '../../hooks/useTeachableAgent';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
@@ -143,13 +144,18 @@ export function ChatWindow({ onSendMessage }: ChatWindowProps) {
               animate={{ opacity: 1 }}
               className="p-6"
             >
-              {messages.map((message, index) => (
-                <MessageBubble 
-                  key={message.id} 
-                  message={message}
-                  isStreaming={isStreaming && index === messages.length - 1 && message.role === 'alex'}
-                />
-              ))}
+              {messages.map((message: Message, index: number) => {
+                const isLastMessage = index === messages.length - 1;
+                const isLastAlexMessage = isLastMessage && message.role === 'alex';
+                return (
+                  <MessageBubble 
+                    key={message.id} 
+                    message={message}
+                    isStreaming={isStreaming && isLastAlexMessage}
+                    isLastAlexMessage={isLastAlexMessage}
+                  />
+                );
+              })}
               
               {isStreaming && messages[messages.length - 1]?.role !== 'alex' && (
                 <div className="flex gap-4 mb-8">
@@ -165,12 +171,12 @@ export function ChatWindow({ onSendMessage }: ChatWindowProps) {
                       <span 
                         className="px-2 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider"
                         style={{
-                          backgroundColor: 'rgba(217, 119, 87, 0.15)',
-                          color: '#d97757',
+                          backgroundColor: activeStrategy.color,
+                          color: '#ffffff',
                           letterSpacing: '0.06em'
                         }}
                       >
-                        STUDENT
+                        {activeStrategy.label}
                       </span>
                     </div>
                     <TypingIndicator />

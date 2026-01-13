@@ -64,21 +64,25 @@ export function useTeachableAgent() {
 
   /**
    * Request an initial message from Alex when a new document is loaded
+   * @param strategyId - Optional strategy ID to use. If not provided, uses activeStrategy.
    */
-  const requestInitialMessage = useCallback(async () => {
+  const requestInitialMessage = useCallback(async (strategyId?: string) => {
+    // Use provided strategyId or fall back to activeStrategy
+    const strategyToUse = strategyId || activeStrategy.id;
+    
     setIsStreaming(true);
 
     // Add placeholder for Alex's response
     addMessage({
       role: 'alex',
       content: '',
-      strategyId: activeStrategy.id,
+      strategyId: strategyToUse,
     });
 
     try {
       const message = await getInitialMessage({
         context: activeContext,
-        strategy_id: activeStrategy.id,
+        strategy_id: strategyToUse,
       });
       updateLastMessage(message);
     } catch (error) {
@@ -90,7 +94,7 @@ export function useTeachableAgent() {
     } finally {
       setIsStreaming(false);
     }
-  }, [activeContext, activeStrategy, addMessage, updateLastMessage, setIsStreaming]);
+  }, [activeContext, activeStrategy.id, addMessage, updateLastMessage, setIsStreaming]);
 
   return {
     sendMessage,

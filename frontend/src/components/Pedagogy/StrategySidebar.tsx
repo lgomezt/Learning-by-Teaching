@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion';
 import { STRATEGY_LIST } from '../../config/pedagogy';
-import { useStrategy } from '../../context/AppContext';
+import { useStrategy, useDocument, useChat } from '../../context/AppContext';
+import { useTeachableAgent } from '../../hooks/useTeachableAgent';
 import { StrategyCard } from './StrategyCard';
-import { Sparkles, Brain, HelpCircle, ListOrdered, Lightbulb } from 'lucide-react';
+import { Sparkles, Brain, HelpCircle, ListOrdered, Lightbulb, CheckSquare2 } from 'lucide-react';
 
 interface StrategySidebarProps {
   isCollapsed?: boolean;
@@ -13,10 +14,32 @@ const iconMap = {
   'help-circle': HelpCircle,
   'list-ordered': ListOrdered,
   'lightbulb': Lightbulb,
+  'check-square': CheckSquare2,
 };
 
 export function StrategySidebar({ isCollapsed = false }: StrategySidebarProps) {
   const { activeStrategy, setActiveStrategy } = useStrategy();
+  const { activeDocument } = useDocument();
+  const { isStreaming, isAnimating } = useChat();
+  const { requestInitialMessage } = useTeachableAgent();
+
+  const handleStrategyChange = async (strategy: typeof STRATEGY_LIST[0]) => {
+    // Don't allow strategy change while streaming or animating
+    if (isStreaming || isAnimating) {
+      return;
+    }
+    
+    // Only change strategy if it's different
+    if (strategy.id !== activeStrategy.id) {
+      setActiveStrategy(strategy);
+      
+      // Auto-send message if document is loaded
+      // Pass strategy ID directly to avoid race condition
+      if (activeDocument) {
+        requestInitialMessage(strategy.id);
+      }
+    }
+  };
 
   // When collapsed, show only icons
   if (isCollapsed) {
@@ -28,8 +51,9 @@ export function StrategySidebar({ isCollapsed = false }: StrategySidebarProps) {
           return (
             <button
               key={strategy.id}
-              onClick={() => setActiveStrategy(strategy)}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all mb-2"
+              onClick={() => handleStrategyChange(strategy)}
+              disabled={isStreaming || isAnimating}
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: isActive ? '#2d5a4d' : '#eae4da',
                 color: isActive ? '#ffffff' : '#5a5a5a'
@@ -76,7 +100,8 @@ export function StrategySidebar({ isCollapsed = false }: StrategySidebarProps) {
             <StrategyCard
               strategy={strategy}
               isActive={activeStrategy.id === strategy.id}
-              onClick={() => setActiveStrategy(strategy)}
+              onClick={() => handleStrategyChange(strategy)}
+              disabled={isStreaming || isAnimating}
             />
           </motion.div>
         ))}

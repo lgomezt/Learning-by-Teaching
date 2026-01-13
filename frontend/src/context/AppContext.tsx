@@ -43,6 +43,7 @@ interface AppState {
   conversationThreads: Record<string, ConversationThread>;
   activeThread: ConversationThread | null;
   isStreaming: boolean;
+  isAnimating: boolean;
   
   // Session tracking for research export
   strategySequence: string[];
@@ -57,6 +58,7 @@ interface AppActions {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void;
   updateLastMessage: (content: string) => void;
   setIsStreaming: (streaming: boolean) => void;
+  setIsAnimating: (animating: boolean) => void;
   clearChat: () => void;
   getSessionData: () => SessionExport;
 }
@@ -99,6 +101,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Chat state - conversation threads per document
   const [conversationThreads, setConversationThreads] = useState<Record<string, ConversationThread>>({});
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   
   // Track strategy changes for research (from active thread)
   const [strategySequence, setStrategySequence] = useState<string[]>([DEFAULT_STRATEGY.id]);
@@ -238,6 +241,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, [activeDocumentId]);
 
+  const setIsStreamingState = useCallback((streaming: boolean) => {
+    setIsStreaming(streaming);
+    // When streaming starts, animation also starts
+    // When streaming ends, animation continues until all characters are revealed
+    if (streaming) {
+      setIsAnimating(true);
+    }
+    // Note: isAnimating is set to false by MessageBubble when animation completes
+  }, []);
+
+  const setIsAnimatingState = useCallback((animating: boolean) => {
+    setIsAnimating(animating);
+  }, []);
+
   const clearChat = useCallback(() => {
     if (!activeDocumentId) return;
     
@@ -284,6 +301,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     activeThread,
     messages,
     isStreaming,
+    isAnimating,
     strategySequence,
     
     // Actions
@@ -293,7 +311,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveStrategy,
     addMessage,
     updateLastMessage,
-    setIsStreaming,
+    setIsStreaming: setIsStreamingState,
+    setIsAnimating: setIsAnimatingState,
     clearChat,
     getSessionData,
   };
@@ -342,8 +361,8 @@ export function useStrategy() {
 }
 
 export function useChat() {
-  const { messages, isStreaming, addMessage, updateLastMessage, setIsStreaming, clearChat } = useApp();
-  return { messages, isStreaming, addMessage, updateLastMessage, setIsStreaming, clearChat };
+  const { messages, isStreaming, isAnimating, addMessage, updateLastMessage, setIsStreaming, setIsAnimating, clearChat } = useApp();
+  return { messages, isStreaming, isAnimating, addMessage, updateLastMessage, setIsStreaming, setIsAnimating, clearChat };
 }
 
 export function useSession() {
