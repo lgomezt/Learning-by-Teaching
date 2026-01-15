@@ -40,11 +40,26 @@ app.add_middleware(
 )
 
 
+class CanvasCardState(BaseModel):
+    id: str
+    text: str
+    x: float
+    y: float
+    column: str
+    color: str | None = None
+
+
+class CanvasState(BaseModel):
+    cards: list[CanvasCardState] = []
+    columnLabels: dict = {"left": "Category A", "right": "Category B"}
+
+
 class ChatRequest(BaseModel):
     message: str
     context: str = ""
     strategy_id: str | None = None
     history: list[dict] = []
+    canvas_state: CanvasState | None = None
 
 
 class InitRequest(BaseModel):
@@ -72,24 +87,46 @@ async def chat(request: ChatRequest):
     Stream a chat response from the Protégé agent.
     
     Uses Server-Sent Events (SSE) for real-time streaming.
+    Supports tool calls for comparison mode (canvas manipulation).
     """
     async def event_generator():
         try:
-            async for chunk in generate_response_stream(
+            # Convert canvas_state to dict if provided
+            canvas_state_dict = None
+            if request.canvas_state:
+                canvas_state_dict = {
+                    "cards": [card.model_dump() for card in request.canvas_state.cards],
+                    "columnLabels": request.canvas_state.columnLabels
+                }
+            
+            async for event in generate_response_stream(
                 message=request.message,
                 context=request.context,
                 strategy_id=request.strategy_id,
-                history=request.history
+                history=request.history,
+                canvas_state=canvas_state_dict
             ):
-                yield {
-                    "event": "message",
-                    "data": json.dumps({"text": chunk})
-                }
+                # Handle text chunks
+                if "text" in event:
+                    yield {
+                        "event": "message",
+                        "data": json.dumps({"text": event["text"]})
+                    }
+                
+                # Handle tool calls
+                if "tool_call" in event:
+                    yield {
+                        "event": "message",
+                        "data": json.dumps({"tool_call": event["tool_call"]})
+                    }
+            
             yield {
                 "event": "done",
                 "data": json.dumps({"status": "complete"})
             }
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             yield {
                 "event": "error",
                 "data": json.dumps({"error": str(e)})
@@ -126,12 +163,17 @@ async def init_conversation(request: InitRequest):
     Generate an initial message from Alex when a document is first uploaded.
     """
     try:
+        print(f"[/init] Received request - strategy_id: {request.strategy_id}, context_length: {len(request.context)}")
         message = await generate_initial_message(
             context=request.context,
             strategy_id=request.strategy_id
         )
+        print(f"[/init] Success - message length: {len(message)}")
         return {"message": message}
     except Exception as e:
+        import traceback
+        print(f"[/init] ERROR: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

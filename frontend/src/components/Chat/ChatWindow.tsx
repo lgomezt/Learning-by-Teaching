@@ -7,9 +7,11 @@ import { useTeachableAgent } from '../../hooks/useTeachableAgent';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ChatInput } from './ChatInput';
+import { ComparisonWorkspace } from '../Canvas/ComparisonWorkspace';
+import type { CanvasSnapshot } from '../Canvas/TldrawCanvas';
 
 interface ChatWindowProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, canvasSnapshot?: CanvasSnapshot) => void;
 }
 
 export function ChatWindow({ onSendMessage }: ChatWindowProps) {
@@ -19,21 +21,32 @@ export function ChatWindow({ onSendMessage }: ChatWindowProps) {
   const { requestInitialMessage } = useTeachableAgent();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
+  // Check if we're in comparison mode
+  const isComparisonMode = activeStrategy.id === 'comparison';
+
+  // Auto-scroll to bottom on new messages (for regular chat mode)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+    if (!isComparisonMode) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isStreaming, isComparisonMode]);
 
   // Trigger initial message when a new document is uploaded or switched to a document with no messages
+  // Only for regular chat mode - comparison workspace handles its own initial message
   useEffect(() => {
-    if (activeDocument && activeContext && messages.length === 0 && !isStreaming) {
+    if (!isComparisonMode && activeDocument && activeContext && messages.length === 0 && !isStreaming) {
       // Use a small delay to ensure state is fully updated
       const timer = setTimeout(() => {
         requestInitialMessage();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [activeDocument?.id, activeContext, messages.length, isStreaming, requestInitialMessage]);
+  }, [activeDocument?.id, activeContext, messages.length, isStreaming, requestInitialMessage, isComparisonMode]);
+
+  // Render comparison workspace for comparison strategy
+  if (isComparisonMode) {
+    return <ComparisonWorkspace onSendMessage={onSendMessage} />;
+  }
 
   const hasDocument = !!activeDocument;
   const hasMessages = messages.length > 0;

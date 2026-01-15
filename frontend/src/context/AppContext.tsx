@@ -1,7 +1,14 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import type { ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef } from 'react';
+import type { ReactNode, MutableRefObject } from 'react';
 import type { Strategy } from '../config/pedagogy';
 import { DEFAULT_STRATEGY } from '../config/pedagogy';
+
+// Canvas handle interface for tool calls
+export interface CanvasHandle {
+  addCard: (text: string, column: 'left' | 'right' | 'middle', isUnsure?: boolean) => string;
+  setColumnLabels: (left: string, right: string) => void;
+  getSnapshot: () => { cards: any[]; columnLabels: { left: string; right: string } };
+}
 
 // Message types
 export type Message = {
@@ -42,11 +49,15 @@ interface AppState {
   // Chat state - per document conversation threads
   conversationThreads: Record<string, ConversationThread>;
   activeThread: ConversationThread | null;
+  messages: Message[]; // Derived from activeThread
   isStreaming: boolean;
   isAnimating: boolean;
   
   // Session tracking for research export
   strategySequence: string[];
+  
+  // Canvas reference for tool calls (shared across all hook instances)
+  canvasRef: MutableRefObject<CanvasHandle | null>;
 }
 
 // Context actions interface
@@ -61,6 +72,7 @@ interface AppActions {
   setIsAnimating: (animating: boolean) => void;
   clearChat: () => void;
   getSessionData: () => SessionExport;
+  setCanvasRef: (ref: CanvasHandle | null) => void;
 }
 
 // Session export format for research
@@ -105,6 +117,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   // Track strategy changes for research (from active thread)
   const [strategySequence, setStrategySequence] = useState<string[]>([DEFAULT_STRATEGY.id]);
+  
+  // Canvas reference for tool calls (shared across all components)
+  const canvasRef = useRef<CanvasHandle | null>(null);
+  
+  const setCanvasRef = useCallback((ref: CanvasHandle | null) => {
+    canvasRef.current = ref;
+  }, []);
 
   // Derived state
   const activeDocument = documents.find(d => d.id === activeDocumentId) || null;
@@ -303,6 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isStreaming,
     isAnimating,
     strategySequence,
+    canvasRef,
     
     // Actions
     addDocument,
@@ -315,6 +335,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsAnimating: setIsAnimatingState,
     clearChat,
     getSessionData,
+    setCanvasRef,
   };
 
   return (

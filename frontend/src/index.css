@@ -98,3 +98,71 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-bark-400);
 }
+
+/* ============================================
+   tldraw Theme Overrides - Match Protégé Palette
+   ============================================ */
+.tl-container {
+  --color-background: #f8f5f0;
+  --color-panel: #f5f1eb;
+  --color-low: #e0d5cc;
+  --color-culled: #c7b5a6;
+  --color-muted-1: #8a8a8a;
+  --color-muted-2: #5a5a5a;
+  --color-text: #1a1a1a;
+  --color-primary: #2d5a4d;
+  --color-selection-fill: rgba(45, 90, 77, 0.1);
+  --color-selection-stroke: #2d5a4d;
+  --radius-1: 8px;
+  --radius-2: 12px;
+  --radius-3: 16px;
+  --radius-4: 20px;
+}
+
+/* Override tldraw toolbar styling */
+.tlui-layout__top__left,
+.tlui-layout__top__center,
+.tlui-layout__top__right {
+  background-color: #f5f1eb !important;
+  border-radius: 12px !important;
+}
+
+.tlui-toolbar {
+  background-color: #f5f1eb !important;
+  border: 1px solid #ddd6cb !important;
+  border-radius: 12px !important;
+}
+
+.tlui-button {
+  border-radius: 8px !important;
+}
+
+.tlui-button:hover {
+  background-color: #e4ede4 !important;
+}
+
+.tlui-button[data-state="selected"] {
+  background-color: #2d5a4d !important;
+  color: white !important;
+}
+
+/* Style panels and menus */
+.tlui-menu,
+.tlui-popover,
+.tlui-dialog {
+  background-color: #f5f1eb !important;
+  border: 1px solid #ddd6cb !important;
+  border-radius: 12px !important;
+}
+
+/* Note/sticky note cards - styled to match message bubbles */
+.tl-note-container {
+  border-radius: 20px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+  font-family: 'Instrument Sans', sans-serif !important;
+}
+
+/* Canvas background */
+.tl-canvas {
+  background-color: #f8f5f0 !important;
+}

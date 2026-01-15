@@ -1,14 +1,56 @@
 /**
  * API Client for the Protégé Backend
+ * Updated: handles canvas state and tool calls for comparison mode
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Canvas state types
+export interface CanvasCardState {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  column: 'left' | 'right' | 'middle';
+  color?: string;
+}
+
+export interface CanvasState {
+  cards: CanvasCardState[];
+  columnLabels: { left: string; right: string };
+}
+
+// Tool call types for agent actions
+export type ToolCall = {
+  name: string;
+  arguments: Record<string, unknown>;
+};
+
+export interface AddToCanvasArgs {
+  text: string;
+  column: 'left' | 'right' | 'middle';
+  is_unsure?: boolean;
+}
+
+export interface SetColumnLabelsArgs {
+  left: string;
+  right: string;
+}
+
+// Chat response types
+export interface ChatStreamEvent {
+  type: 'text' | 'tool_call' | 'done' | 'error';
+  text?: string;
+  tool_call?: ToolCall;
+  error?: string;
+}
 
 export interface ChatRequest {
   message: string;
   context: string;
   strategy_id: string | null;
   history: Array<{ role: string; content: string }>;
+  canvas_state?: CanvasState;
 }
 
 export interface InitRequest {
@@ -18,8 +60,9 @@ export interface InitRequest {
 
 /**
  * Stream a chat response from the backend using SSE
+ * Now yields ChatStreamEvent to handle both text and tool calls
  */
-export async function* streamChat(request: ChatRequest): AsyncGenerator<string> {
+export async function* streamChat(request: ChatRequest): AsyncGenerator<ChatStreamEvent> {
   const response = await fetch(`${API_BASE_URL}/chat`, {
     method: 'POST',
     headers: {
@@ -55,8 +98,25 @@ export async function* streamChat(request: ChatRequest): AsyncGenerator<string> 
           const data = line.slice(6);
           try {
             const parsed = JSON.parse(data);
+            
+            // Handle text chunks
             if (parsed.text) {
-              yield parsed.text;
+              yield { type: 'text', text: parsed.text };
+            }
+            
+            // Handle tool calls
+            if (parsed.tool_call) {
+              yield { type: 'tool_call', tool_call: parsed.tool_call };
+            }
+            
+            // Handle completion
+            if (parsed.status === 'complete') {
+              yield { type: 'done' };
+            }
+            
+            // Handle errors
+            if (parsed.error) {
+              yield { type: 'error', error: parsed.error };
             }
           } catch (e) {
             // Skip invalid JSON lines
