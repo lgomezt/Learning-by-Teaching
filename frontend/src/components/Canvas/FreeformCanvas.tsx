@@ -197,24 +197,27 @@ export const FreeformCanvas = forwardRef<FreeformCanvasHandle, FreeformCanvasPro
 
     // Calculate zoom to fit content in view
     const calculateFitZoom = useCallback(() => {
-      const contentWidth = contentBounds.maxX;
-      const contentHeight = contentBounds.maxY;
+      // Use virtual canvas size for fitting
+      const canvasWidth = canvasSize.width;
+      const canvasHeight = canvasSize.height;
 
-      if (contentWidth <= 0 || contentHeight <= 0) return 1;
+      if (canvasWidth <= 0 || canvasHeight <= 0) return 1;
 
-      const scaleX = (containerSize.width - 20) / contentWidth;
-      const scaleY = (containerSize.height - 60) / contentHeight; // Account for toolbar
+      // Available space (accounting for toolbar and padding)
+      const availableWidth = containerSize.width - 40;
+      const availableHeight = containerSize.height - 90; // toolbar + padding
+
+      const scaleX = availableWidth / canvasWidth;
+      const scaleY = availableHeight / canvasHeight;
 
       return Math.min(scaleX, scaleY, 1.5); // Cap at 150%
-    }, [containerSize, contentBounds]);
+    }, [containerSize, canvasSize]);
 
-    // Auto-fit on initial content
+    // Auto-fit when container size changes or content is added
     useEffect(() => {
-      if (conceptBoxes.length > 0 || cards.length > 0) {
-        const fitZoom = calculateFitZoom();
-        setZoom(Math.max(0.3, Math.min(fitZoom, 1)));
-      }
-    }, [conceptBoxes.length, cards.length]);
+      const fitZoom = calculateFitZoom();
+      setZoom(Math.max(0.2, Math.min(fitZoom, 1.2)));
+    }, [calculateFitZoom]);
 
     // Derived state
     const availableColors = conceptBoxes.map((b) => b.color);
@@ -455,9 +458,9 @@ export const FreeformCanvas = forwardRef<FreeformCanvasHandle, FreeformCanvasPro
           </button>
         </div>
 
-        {/* Canvas container - centered in view */}
+        {/* Canvas container - fits perfectly in view */}
         <div
-          className="absolute inset-0 overflow-auto"
+          className="absolute inset-0 overflow-hidden flex items-center justify-center"
           style={{ paddingTop: 50 }}
         >
           <div
@@ -465,11 +468,9 @@ export const FreeformCanvas = forwardRef<FreeformCanvasHandle, FreeformCanvasPro
             className="relative"
             style={{
               transform: `scale(${zoom})`,
-              transformOrigin: 'top left',
+              transformOrigin: 'center center',
               width: canvasSize.width,
               height: canvasSize.height,
-              minWidth: containerSize.width / zoom,
-              minHeight: (containerSize.height - 50) / zoom,
             }}
           >
             {/* Drawing layer (behind elements) */}
