@@ -29,91 +29,167 @@ client = genai.Client(api_key=api_key)
 MODEL_ID = "gemini-2.0-flash"  # Using stable model instead of preview
 
 
-# Canvas tool definitions for comparison mode
-CANVAS_TOOLS = [
+# Freeform canvas tool definitions for comparison mode
+FREEFORM_CANVAS_TOOLS = [
     types.Tool(
         function_declarations=[
             types.FunctionDeclaration(
-                name="addToCanvas",
-                description="Add a concept card to the comparison whiteboard. Use this to summarize key points the user explains.",
+                name="createConceptBox",
+                description="Create a concept category box on the canvas. Use when establishing what concepts the user wants to compare. Each concept gets its own colored box that the user can drag around.",
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,
+                    properties={
+                        "name": types.Schema(
+                            type=types.Type.STRING,
+                            description="The name of the concept (e.g., 'Mitosis', 'Photosynthesis', 'Democracy')"
+                        ),
+                        "color": types.Schema(
+                            type=types.Type.STRING,
+                            description="Hex color for the concept box. Use distinct colors: '#ef4444' (red), '#3b82f6' (blue), '#22c55e' (green), '#f59e0b' (amber), '#8b5cf6' (purple), '#ec4899' (pink), '#06b6d4' (cyan), '#f97316' (orange)"
+                        ),
+                    },
+                    required=["name", "color"],
+                ),
+            ),
+            types.FunctionDeclaration(
+                name="createCard",
+                description="Create a card from the user's explanation. Cards appear at random positions on the canvas for the user to organize. Keep card text short (5-15 words). The user will drag cards near concept boxes and click to assign colors.",
                 parameters=types.Schema(
                     type=types.Type.OBJECT,
                     properties={
                         "text": types.Schema(
                             type=types.Type.STRING,
-                            description="The text content for the card (keep it short, 5-10 words max)"
+                            description="Short summary of the concept being explained (5-15 words max)"
                         ),
-                        "column": types.Schema(
+                        "color": types.Schema(
                             type=types.Type.STRING,
-                            enum=["left", "right", "middle"],
-                            description="Which column to place the card: 'left' for first category, 'right' for second category, 'middle' if unsure"
-                        ),
-                        "is_unsure": types.Schema(
-                            type=types.Type.BOOLEAN,
-                            description="Set to true if you're placing this card but not confident about its position"
+                            description="Optional: hex color to pre-assign the card. Usually omit this and let the user assign colors by clicking."
                         ),
                     },
-                    required=["text", "column"],
+                    required=["text"],
                 ),
             ),
             types.FunctionDeclaration(
-                name="setColumnLabels",
-                description="Set the labels for the two comparison columns. Call this when establishing what concepts are being compared.",
+                name="suggestChunking",
+                description="Indicate that the user's explanation is too complex and should be broken into smaller parts. Use when the user gives a long explanation that would be hard to capture in one card.",
                 parameters=types.Schema(
                     type=types.Type.OBJECT,
                     properties={
-                        "left": types.Schema(
+                        "reason": types.Schema(
                             type=types.Type.STRING,
-                            description="Label for the left column (first concept being compared)"
-                        ),
-                        "right": types.Schema(
-                            type=types.Type.STRING,
-                            description="Label for the right column (second concept being compared)"
+                            description="Brief explanation of why the information should be chunked (e.g., 'That covers multiple aspects - let\\'s break it down')"
                         ),
                     },
-                    required=["left", "right"],
+                    required=["reason"],
                 ),
             ),
         ]
     )
 ]
 
+# Keep legacy tools for backward compatibility during transition
+CANVAS_TOOLS = FREEFORM_CANVAS_TOOLS
+
 
 def format_canvas_state(canvas_state: dict | None) -> str:
-    """Format canvas state for inclusion in the prompt."""
+    """Format canvas state for inclusion in the prompt (freeform canvas version)."""
     if not canvas_state:
-        return "The whiteboard is currently empty."
-    
+        return "The canvas is currently empty."
+
+    concept_boxes = canvas_state.get("conceptBoxes", [])
     cards = canvas_state.get("cards", [])
-    labels = canvas_state.get("columnLabels", {"left": "Category A", "right": "Category B"})
-    
+    drawings = canvas_state.get("drawings", [])
+
+    # Check if it's the old format (with columnLabels) - backward compatibility
+    if "columnLabels" in canvas_state and "conceptBoxes" not in canvas_state:
+        # Legacy format - use old logic
+        labels = canvas_state.get("columnLabels", {"left": "Category A", "right": "Category B"})
+        old_cards = canvas_state.get("cards", [])
+        if not old_cards:
+            return f"The whiteboard has two columns: '{labels['left']}' and '{labels['right']}', but no cards have been placed yet."
+        description = f"Current whiteboard state:\n"
+        description += f"- Left column: \"{labels['left']}\"\n"
+        description += f"- Right column: \"{labels['right']}\"\n\n"
+        left_cards = [c for c in old_cards if c.get("column") == "left"]
+        right_cards = [c for c in old_cards if c.get("column") == "right"]
+        middle_cards = [c for c in old_cards if c.get("column") == "middle"]
+        if left_cards:
+            description += f"[{labels['left']}]:\n"
+            for card in left_cards:
+                description += f"  - \"{card.get('text', '')}\"\n"
+        if right_cards:
+            description += f"\n[{labels['right']}]:\n"
+            for card in right_cards:
+                description += f"  - \"{card.get('text', '')}\"\n"
+        if middle_cards:
+            description += f"\n[Undecided/Middle Zone]:\n"
+            for card in middle_cards:
+                description += f"  - \"{card.get('text', '')}\"\n"
+        return description
+
+    # New freeform canvas format
+    lines = []
+    lines.append("=== CANVAS STATE ===")
+
+    # Concept boxes
+    if not concept_boxes:
+        lines.append("\nCONCEPT BOXES: None created yet")
+    else:
+        lines.append("\nCONCEPT BOXES:")
+        for box in concept_boxes:
+            lines.append(f"  - \"{box.get('name', '')}\" (color: {box.get('color', 'unknown')}, position: {int(box.get('x', 0))},{int(box.get('y', 0))})")
+
+    # Cards
     if not cards:
-        return f"The whiteboard has two columns: '{labels['left']}' and '{labels['right']}', but no cards have been placed yet."
-    
-    description = f"Current whiteboard state:\n"
-    description += f"- Left column: \"{labels['left']}\"\n"
-    description += f"- Right column: \"{labels['right']}\"\n\n"
-    
-    left_cards = [c for c in cards if c.get("column") == "left"]
-    right_cards = [c for c in cards if c.get("column") == "right"]
-    middle_cards = [c for c in cards if c.get("column") == "middle"]
-    
-    if left_cards:
-        description += f"[{labels['left']}]:\n"
-        for card in left_cards:
-            description += f"  - \"{card.get('text', '')}\"\n"
-    
-    if right_cards:
-        description += f"\n[{labels['right']}]:\n"
-        for card in right_cards:
-            description += f"  - \"{card.get('text', '')}\"\n"
-    
-    if middle_cards:
-        description += f"\n[Undecided/Middle Zone]:\n"
-        for card in middle_cards:
-            description += f"  - \"{card.get('text', '')}\"\n"
-    
-    return description
+        lines.append("\nCARDS: No cards on canvas")
+    else:
+        lines.append(f"\nCARDS ({len(cards)} total):")
+
+        # Group by color
+        unassigned = [c for c in cards if not c.get("color")]
+        assigned = [c for c in cards if c.get("color")]
+
+        if unassigned:
+            lines.append("  [Unassigned/Gray]:")
+            for card in unassigned:
+                lines.append(f"    - \"{card.get('text', '')}\" at ({int(card.get('x', 0))},{int(card.get('y', 0))})")
+
+        # Group assigned cards by color
+        by_color = {}
+        for card in assigned:
+            color = card.get("color")
+            if color not in by_color:
+                by_color[color] = []
+            by_color[color].append(card)
+
+        for color, color_cards in by_color.items():
+            # Find concept name for this color
+            concept = next((b for b in concept_boxes if b.get("color") == color), None)
+            label = concept.get("name", color) if concept else color
+            lines.append(f"  [{label}]:")
+            for card in color_cards:
+                lines.append(f"    - \"{card.get('text', '')}\" at ({int(card.get('x', 0))},{int(card.get('y', 0))})")
+
+    # Spatial relationships
+    if cards and concept_boxes:
+        lines.append("\nSPATIAL RELATIONSHIPS:")
+        for box in concept_boxes:
+            nearby = []
+            box_x, box_y = box.get("x", 0), box.get("y", 0)
+            for card in cards:
+                card_x, card_y = card.get("x", 0), card.get("y", 0)
+                distance = ((card_x - box_x) ** 2 + (card_y - box_y) ** 2) ** 0.5
+                if distance < 200:
+                    nearby.append(card.get("text", ""))
+            if nearby:
+                nearby_quoted = ', '.join(f'"{t}"' for t in nearby)
+                lines.append(f"  Cards near \"{box.get('name', '')}\": {nearby_quoted}")
+
+    # Drawing indicator
+    if drawings:
+        lines.append(f"\nDRAWINGS: {len(drawings)} stroke(s) on canvas")
+
+    return "\n".join(lines)
 
 
 async def generate_response_stream(

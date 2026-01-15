@@ -7,11 +7,11 @@ import { useTeachableAgent } from '../../hooks/useTeachableAgent';
 import { MessageBubble } from '../Chat/MessageBubble';
 import { TypingIndicator } from '../Chat/TypingIndicator';
 import { ChatInput } from '../Chat/ChatInput';
-import { SimpleCanvas } from './SimpleCanvas';
-import type { SimpleCanvasHandle, CanvasSnapshot } from './SimpleCanvas';
+import { FreeformCanvas } from './FreeformCanvas';
+import type { FreeformCanvasHandle, CanvasState } from './types';
 
 interface ComparisonWorkspaceProps {
-  onSendMessage: (message: string, canvasSnapshot?: CanvasSnapshot) => void;
+  onSendMessage: (message: string, canvasSnapshot?: CanvasState) => void;
 }
 
 export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps) {
@@ -20,10 +20,10 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
   const { activeStrategy } = useStrategy();
   const { requestInitialMessage, setCanvasRef } = useTeachableAgent();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<SimpleCanvasHandle>(null);
+  const canvasRef = useRef<FreeformCanvasHandle>(null);
 
-  // Handle canvas ready - called by SimpleCanvas when it's loaded
-  const handleCanvasReady = useCallback((handle: SimpleCanvasHandle) => {
+  // Handle canvas ready - called by FreeformCanvas when it's loaded
+  const handleCanvasReady = useCallback((handle: FreeformCanvasHandle) => {
     setCanvasRef(handle);
   }, [setCanvasRef]);
 
@@ -50,10 +50,10 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
   }, [activeDocument?.id, activeContext, messages.length, isStreaming, requestInitialMessage]);
 
   // Handle canvas changes
-  const handleCanvasChange = useCallback((snapshot: CanvasSnapshot) => {
-    // Store the latest snapshot for when user sends a message
+  const handleCanvasChange = useCallback((state: CanvasState) => {
+    // Store the latest state for when user sends a message
     // This is handled by the parent component through getSnapshot
-    console.log('[Canvas] State changed:', snapshot.cards.length, 'cards');
+    console.log('[Canvas] State changed:', state.cards.length, 'cards,', state.conceptBoxes.length, 'concept boxes');
   }, []);
 
   // Handle sending message with canvas state
@@ -114,12 +114,10 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
           backgroundColor: '#f8f5f0',
         }}
       >
-        <SimpleCanvas
+        <FreeformCanvas
           ref={canvasRef}
-          onShapeChange={handleCanvasChange}
+          onStateChange={handleCanvasChange}
           onReady={handleCanvasReady}
-          initialLeftLabel="Category A"
-          initialRightLabel="Category B"
         />
       </motion.div>
 
@@ -134,7 +132,7 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
         }}
       >
         {/* Compact Header */}
-        <div 
+        {/* <div 
           className="flex-shrink-0 px-4 py-2 flex items-center gap-3"
           style={{ borderTop: '1px solid #e8e4de' }}
         >
@@ -152,7 +150,7 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
               {activeDocument.name}
             </p>
           </div>
-        </div>
+        </div> */}
 
         {/* Messages area - scrollable */}
         <div className="flex-1 overflow-y-auto px-4 py-2">
@@ -230,6 +228,6 @@ export function ComparisonWorkspace({ onSendMessage }: ComparisonWorkspaceProps)
 
 // Export the canvas ref getter for external access
 export function useComparisonCanvas() {
-  const canvasRef = useRef<SimpleCanvasHandle>(null);
+  const canvasRef = useRef<FreeformCanvasHandle>(null);
   return canvasRef;
 }

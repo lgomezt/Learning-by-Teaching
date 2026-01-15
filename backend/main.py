@@ -40,7 +40,8 @@ app.add_middleware(
 )
 
 
-class CanvasCardState(BaseModel):
+# Legacy T-chart canvas card format
+class LegacyCanvasCardState(BaseModel):
     id: str
     text: str
     x: float
@@ -49,9 +50,47 @@ class CanvasCardState(BaseModel):
     color: str | None = None
 
 
+# New freeform canvas types
+class ConceptBoxState(BaseModel):
+    id: str
+    name: str
+    color: str
+    x: float
+    y: float
+    width: float = 140
+    height: float = 50
+
+
+class FreeformCardState(BaseModel):
+    id: str
+    text: str
+    x: float
+    y: float
+    color: str | None = None
+    isUnsure: bool = False
+    createdAt: float = 0
+
+
+class DrawingStrokePoint(BaseModel):
+    x: float
+    y: float
+
+
+class DrawingStrokeState(BaseModel):
+    id: str
+    points: list[DrawingStrokePoint] = []
+    color: str = "#374151"
+    strokeWidth: float = 3
+
+
+# Flexible canvas state that accepts both formats
 class CanvasState(BaseModel):
-    cards: list[CanvasCardState] = []
-    columnLabels: dict = {"left": "Category A", "right": "Category B"}
+    # Legacy format fields
+    cards: list[LegacyCanvasCardState | FreeformCardState] = []
+    columnLabels: dict | None = None
+    # New freeform format fields
+    conceptBoxes: list[ConceptBoxState] = []
+    drawings: list[DrawingStrokeState] = []
 
 
 class ChatRequest(BaseModel):
@@ -96,8 +135,12 @@ async def chat(request: ChatRequest):
             if request.canvas_state:
                 canvas_state_dict = {
                     "cards": [card.model_dump() for card in request.canvas_state.cards],
-                    "columnLabels": request.canvas_state.columnLabels
+                    "conceptBoxes": [box.model_dump() for box in request.canvas_state.conceptBoxes],
+                    "drawings": [stroke.model_dump() for stroke in request.canvas_state.drawings],
                 }
+                # Include columnLabels if present (legacy format)
+                if request.canvas_state.columnLabels:
+                    canvas_state_dict["columnLabels"] = request.canvas_state.columnLabels
             
             async for event in generate_response_stream(
                 message=request.message,

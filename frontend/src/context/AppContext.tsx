@@ -4,11 +4,25 @@ import type { Strategy } from '../config/pedagogy';
 import { DEFAULT_STRATEGY } from '../config/pedagogy';
 
 // Canvas handle interface for tool calls
-export interface CanvasHandle {
+// Supports both legacy T-chart canvas and new freeform canvas
+
+// Legacy T-chart canvas handle
+export interface LegacyCanvasHandle {
   addCard: (text: string, column: 'left' | 'right' | 'middle', isUnsure?: boolean) => string;
   setColumnLabels: (left: string, right: string) => void;
   getSnapshot: () => { cards: any[]; columnLabels: { left: string; right: string } };
 }
+
+// New freeform canvas handle
+export interface FreeformCanvasHandle {
+  createConceptBox: (name: string, color: string) => string;
+  createCard: (text: string, color?: string) => string;
+  getSnapshot: () => { conceptBoxes: any[]; cards: any[]; drawings: any[] };
+  getStateDescription: () => string;
+}
+
+// Union type - canvas ref can be either type
+export type CanvasHandle = LegacyCanvasHandle | FreeformCanvasHandle;
 
 // Message types
 export type Message = {

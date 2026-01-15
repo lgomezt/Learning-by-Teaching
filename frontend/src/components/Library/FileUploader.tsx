@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Loader2, AlertCircle, Check, FileText } from 'lucide-react';
 import { useFileProcessor } from '../../hooks/useFileProcessor';
@@ -9,6 +9,7 @@ export function FileUploader() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const { processFile, isProcessing, error } = useFileProcessor();
   const { addDocument, documents } = useDocument();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
     try {
@@ -61,12 +62,21 @@ export function FileUploader() {
     if (file) {
       handleFile(file);
     }
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
   }, [handleFile]);
+
+  const handleClick = useCallback(() => {
+    if (!isProcessing) {
+      fileInputRef.current?.click();
+    }
+  }, [isProcessing]);
 
   return (
     <div className="space-y-4">
       {/* Dropzone */}
-      <motion.label
+      <motion.div
+        onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -83,6 +93,7 @@ export function FileUploader() {
         `}
       >
         <input
+          ref={fileInputRef}
           type="file"
           accept=".pdf,.txt,.md"
           onChange={handleInputChange}
@@ -97,7 +108,7 @@ export function FileUploader() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center pointer-events-none"
             >
               <Loader2 className="w-10 h-10 text-sage-500 animate-spin" />
               <p className="mt-3 text-sm text-bark-600">Processing document...</p>
@@ -108,7 +119,7 @@ export function FileUploader() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center pointer-events-none"
             >
               <div className="w-10 h-10 rounded-full bg-sage-100 flex items-center justify-center">
                 <Check className="w-6 h-6 text-sage-600" />
@@ -121,7 +132,7 @@ export function FileUploader() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center pointer-events-none"
             >
               {documents.length === 0 ? (
                 <>
@@ -154,7 +165,7 @@ export function FileUploader() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.label>
+      </motion.div>
 
       {/* Error message */}
       <AnimatePresence>

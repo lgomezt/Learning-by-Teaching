@@ -28,18 +28,60 @@ export function useTeachableAgent() {
     console.log('[useTeachableAgent] Executing tool call:', toolCall.name);
 
     switch (toolCall.name) {
+      // New freeform canvas tools
+      case 'createConceptBox': {
+        const args = toolCall.arguments as { name: string; color: string };
+        if ('createConceptBox' in canvas) {
+          canvas.createConceptBox(args.name, args.color);
+        } else {
+          console.warn('[useTeachableAgent] Canvas does not support createConceptBox');
+        }
+        break;
+      }
+      case 'createCard': {
+        const args = toolCall.arguments as { text: string; color?: string };
+        if ('createCard' in canvas) {
+          canvas.createCard(args.text, args.color);
+        } else if ('addCard' in canvas) {
+          // Fallback for legacy canvas - put in middle column
+          (canvas as { addCard: (text: string, column: string, isUnsure?: boolean) => void })
+            .addCard(args.text, 'middle', false);
+        }
+        break;
+      }
+      case 'suggestChunking': {
+        // This is informational - the agent will include text explaining why
+        // No canvas action needed, just log it
+        const args = toolCall.arguments as { reason: string };
+        console.log('[useTeachableAgent] Chunking suggested:', args.reason);
+        break;
+      }
+      // Legacy tools for backward compatibility
       case 'addToCanvas': {
         const args = toolCall.arguments as {
           text: string;
           column: 'left' | 'right' | 'middle';
           is_unsure?: boolean;
         };
-        canvas.addCard(args.text, args.column, args.is_unsure);
+        if ('addCard' in canvas) {
+          (canvas as { addCard: (text: string, column: string, isUnsure?: boolean) => void })
+            .addCard(args.text, args.column, args.is_unsure);
+        } else if ('createCard' in canvas) {
+          // New canvas - create card without column assignment
+          canvas.createCard(args.text);
+        }
         break;
       }
       case 'setColumnLabels': {
         const args = toolCall.arguments as { left: string; right: string };
-        canvas.setColumnLabels(args.left, args.right);
+        if ('setColumnLabels' in canvas) {
+          (canvas as { setColumnLabels: (left: string, right: string) => void })
+            .setColumnLabels(args.left, args.right);
+        } else if ('createConceptBox' in canvas) {
+          // New canvas - create concept boxes instead
+          canvas.createConceptBox(args.left, '#3b82f6');
+          canvas.createConceptBox(args.right, '#ef4444');
+        }
         break;
       }
       default:
@@ -49,19 +91,32 @@ export function useTeachableAgent() {
 
   /**
    * Get canvas state for API requests
+   * Supports both new freeform canvas and legacy T-chart format
    */
   const getCanvasState = useCallback((): CanvasState | undefined => {
     const canvas = canvasRef.current;
     if (!canvas) return undefined;
-    
+
     const snapshot = canvas.getSnapshot();
+
+    // Check if it's the new freeform canvas format
+    if ('conceptBoxes' in snapshot) {
+      // New freeform canvas format
+      return {
+        conceptBoxes: snapshot.conceptBoxes,
+        cards: snapshot.cards,
+        drawings: snapshot.drawings || [],
+      };
+    }
+
+    // Legacy T-chart format
     return {
-      cards: snapshot.cards.map(card => ({
+      cards: snapshot.cards.map((card: { id: string; text: string; x: number; y: number; column: string }) => ({
         id: card.id,
         text: card.text,
         x: card.x,
         y: card.y,
-        column: card.column,
+        column: card.column as 'left' | 'right' | 'middle',
       })),
       columnLabels: snapshot.columnLabels,
     };

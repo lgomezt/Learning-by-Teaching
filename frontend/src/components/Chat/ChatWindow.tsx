@@ -8,10 +8,10 @@ import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { ChatInput } from './ChatInput';
 import { ComparisonWorkspace } from '../Canvas/ComparisonWorkspace';
-import type { CanvasSnapshot } from '../Canvas/TldrawCanvas';
+import type { CanvasState } from '../Canvas/types';
 
 interface ChatWindowProps {
-  onSendMessage: (message: string, canvasSnapshot?: CanvasSnapshot) => void;
+  onSendMessage: (message: string, canvasSnapshot?: CanvasState) => void;
 }
 
 export function ChatWindow({ onSendMessage }: ChatWindowProps) {

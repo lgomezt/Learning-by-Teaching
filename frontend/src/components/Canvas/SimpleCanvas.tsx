@@ -252,12 +252,12 @@ export const SimpleCanvas = forwardRef<SimpleCanvasHandle, SimpleCanvasProps>(
         </div>
 
         {/* Inline label */}
-        <span 
+        {/* <span 
           className="absolute top-3 left-4 z-10 text-[11px] font-medium uppercase tracking-wider pointer-events-none"
           style={{ color: '#8a8a8a', letterSpacing: '0.08em' }}
         >
           Comparison Board
-        </span>
+        </span> */}
 
         {/* Custom zoom controls */}
         <div 
@@ -338,4 +338,3 @@ SimpleCanvas.displayName = 'SimpleCanvas';
 
 // Re-export types for compatibility
 export type { SimpleCanvasHandle as TldrawCanvasHandle };
-export type { CanvasSnapshot };

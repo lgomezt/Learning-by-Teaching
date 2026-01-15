@@ -5,8 +5,10 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-// Canvas state types
-export interface CanvasCardState {
+// Canvas state types - supports both legacy T-chart and new freeform canvas
+
+// Legacy T-chart card format
+export interface LegacyCanvasCardState {
   id: string;
   text: string;
   x: number;
@@ -15,10 +17,50 @@ export interface CanvasCardState {
   color?: string;
 }
 
-export interface CanvasState {
-  cards: CanvasCardState[];
-  columnLabels: { left: string; right: string };
+// New freeform canvas types
+export interface ConceptBoxState {
+  id: string;
+  name: string;
+  color: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
+
+export interface FreeformCardState {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  color: string | null;
+  isUnsure: boolean;
+  createdAt: number;
+}
+
+export interface DrawingStrokeState {
+  id: string;
+  points: { x: number; y: number }[];
+  color: string;
+  strokeWidth: number;
+}
+
+// Union type for backward compatibility - can be either legacy or freeform format
+export type CanvasState =
+  | {
+      // Legacy T-chart format
+      cards: LegacyCanvasCardState[];
+      columnLabels: { left: string; right: string };
+    }
+  | {
+      // New freeform canvas format
+      conceptBoxes: ConceptBoxState[];
+      cards: FreeformCardState[];
+      drawings: DrawingStrokeState[];
+    };
+
+// Alias for backward compatibility
+export type CanvasCardState = LegacyCanvasCardState;
 
 // Tool call types for agent actions
 export type ToolCall = {

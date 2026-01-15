@@ -221,7 +221,7 @@ export function Layout({ library, chat, pedagogy, exportButton }: LayoutProps) {
             >
               <div className="flex-1">
                 {React.isValidElement(pedagogy)
-                  ? React.cloneElement(pedagogy, { isCollapsed: false })
+                  ? React.cloneElement(pedagogy, { isCollapsed: false } as React.Attributes)
                   : pedagogy}
               </div>
               {exportButton && (
@@ -240,7 +240,7 @@ export function Layout({ library, chat, pedagogy, exportButton }: LayoutProps) {
             >
               {/* Strategy icons when collapsed */}
               {React.isValidElement(pedagogy)
-                ? React.cloneElement(pedagogy, { isCollapsed: true })
+                ? React.cloneElement(pedagogy, { isCollapsed: true } as React.Attributes)
                 : pedagogy}
             </motion.div>
           )}
